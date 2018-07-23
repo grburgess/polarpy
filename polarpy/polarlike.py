@@ -1,9 +1,12 @@
 import numpy as np
 import scipy.interpolate as interpolate
-import 
+import h5py
 
-from threeML import XYLike, PluginPrototype
+from threeML import  PluginPrototype
 from threeML.utils.statistics.likelihood_functions import poisson_observed_poisson_background
+from astromodels import Parameter, Uniform_prior
+
+import collections
 
 class PolarLike(PluginPrototype):
     """
@@ -11,7 +14,7 @@ class PolarLike(PluginPrototype):
     """
     
     
-    def __init__(self,name, observation, background, response, exposure=1., background_exposure=1.):
+    def __init__(self,name, observation, background, response, exposure=1., background_exposure=1., verbose=False):
         """
         
         """
@@ -21,9 +24,10 @@ class PolarLike(PluginPrototype):
         self._total_counts = observation
         self._background_counts = background
         self._scale = exposure/background_exposure
+        self._exposure = exposure
+        self._background_exposure = background_exposure
         
         
-        self._interpolate_rsp(rsp_file)
         
         
         self._nuisance_parameter = Parameter("cons_%s" % name, 1.0, min_value=0.8, max_value=1.2, delta=0.05,
@@ -34,7 +38,41 @@ class PolarLike(PluginPrototype):
          
          
         super(PolarLike, self).__init__(name, nuisance_parameters)
+
+        self._source_name = None
+
+        self._verbose = verbose
+
+        self._interpolate_rsp(response)
+
         
+
+    def use_effective_area_correction(self,lower=0.5, upper=1.5):
+
+
+        self._nuisance_parameter.free = True
+        self._nuisance_parameter.bounds = (lower, upper)
+        self._nuisance_parameter.prior = Uniform_prior(lower_bound=lower,upper_bound=upper)
+        if self._verbose:
+
+            print('Using effective area correction')
+        
+
+    def fix_effective_area_correction(self, value=1):
+
+        self._nuisance_parameter.fix = True
+        self._nuisance_parameter.value = value
+
+        if self._verbose:
+
+            print('Fixing effective area correction')
+
+    @property    
+    def effective_area_correction(self):
+
+
+        return self._nuisance_parameter
+            
     
     def _interpolate_rsp(self, rsp_file):
         """
@@ -220,7 +258,7 @@ class PolarLike(PluginPrototype):
 
         return differential_flux, integral
 
-   def _get_total_expectation(self):
+    def _get_total_expectation(self):
 
         # first we need to get the integrated expectation from the spectrum
         
@@ -242,12 +280,8 @@ class PolarLike(PluginPrototype):
         
         model_rate = self._get_total_expectation()
 
-        model_counts = self._nuisance_parameter.value * self._exposure
-
-
-        
-        
-        
+        model_counts = self._nuisance_parameter.value * self._exposure * model_rate
+                
         loglike, bkg_model = poisson_observed_poisson_background(self._total_counts,
                                                                  self._background_counts,
                                                                  self._scale,
