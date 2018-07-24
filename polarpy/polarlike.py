@@ -8,6 +8,29 @@ from astromodels import Parameter, Uniform_prior
 
 import collections
 
+try:
+
+    # see if we have mpi and/or are using parallel
+
+    from mpi4py import MPI
+
+    n_engines = MPI.COMM_WORLD.Get_size()
+    if n_engines > 1: # need parallel capabilities
+        using_mpi = True
+
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+        
+    else:
+
+        using_mpi = False
+except:
+
+    using_mpi = False
+
+
+
+
 class PolarLike(PluginPrototype):
     """
     Preliminary POLAR polarization plugin
@@ -125,31 +148,78 @@ class PolarLike(PluginPrototype):
             bin_center = 0.5 *(bins[:-1] + bins[1:])
 
             all_interp = []
+
+            # fix this shit later
+            if False:#using_mpi:
+                part_results=[]
+
+                size_per_rank = float(len(bin_center)/n_engines)
+                lower_bound = int(np.floor(rank*size_per_rank))
+                upper_bound = int(np.floor((rank+1)*size_per_rank))
+
+                iterartor = range(len(bin_center))
+
+                for i in iterartor[lower_bound:upper_bound]: 
+
+                    data = []
+                    #energy = get_energy()
+
+                    for ene in energy:
+
+                        for ang in pol_ang:
+
+                            for deg in pol_deg:
+
+                                _, hist = get_hist(ene,deg,ang)
+
+
+                                data.append(hist[i])
+                    data = np.array(data).reshape((energy.shape[0],
+                                                   pol_ang.shape[0],
+                                                   pol_deg.shape[0]))
+
+
+
+
+                    this_interpolator = interpolate.RegularGridInterpolator((energy,pol_ang,pol_deg), data)
+
+                    part_results.append(this_interpolator)
+
             
-            for i, bm in enumerate(bin_center):
-    
-                data = []
-                #energy = get_energy()
-
-                for ene in energy:
-                    for ang in pol_ang:
-                        for deg in pol_deg:
-
-                            _, hist = get_hist(ene,deg,ang)
+                    all_parts = comm.gather(part_results, root=0)
 
 
-                            data.append(hist[i])
-                data = np.array(data).reshape((energy.shape[0],
-                                               pol_ang.shape[0],
-                                               pol_deg.shape[0]))
+                    if rank ==0:
+
+                        all_interp = np.concatenate(all_parts)
+
+            else:
+                for i, bm in enumerate(bin_center):
+
+                    data = []
+                    #energy = get_energy()
+
+                    for ene in energy:
+
+                        for ang in pol_ang:
+
+                            for deg in pol_deg:
+
+                                _, hist = get_hist(ene,deg,ang)
+
+
+                                data.append(hist[i])
+                    data = np.array(data).reshape((energy.shape[0],
+                                                   pol_ang.shape[0],
+                                                   pol_deg.shape[0]))
 
 
 
 
-                this_interpolator = interpolate.RegularGridInterpolator((energy,pol_ang,pol_deg), data)
+                    this_interpolator = interpolate.RegularGridInterpolator((energy,pol_ang,pol_deg), data)
 
 
-                all_interp.append(this_interpolator)
+                    all_interp.append(this_interpolator)
                 
             self._all_interp = all_interp
             
