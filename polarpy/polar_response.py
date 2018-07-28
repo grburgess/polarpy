@@ -1,12 +1,12 @@
 import numpy as np
 import h5py
-
+import scipy.interpolate as interpolate
 
 
 
 class PolarResponse(object):
 
-    def __init__(response_file):
+    def __init__(self, response_file):
 
         self._rsp_file = response_file
 
@@ -178,4 +178,7 @@ class PolarResponse(object):
     def scattering_bins_hi(self):
         return self._scattering_bins_hi
 
+    @property
+    def interpolators(self):
+        return self._all_interp
         
