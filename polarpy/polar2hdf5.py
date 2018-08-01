@@ -3,7 +3,54 @@ from threeML.io.cern_root_utils.tobject_to_numpy import tree_to_ndarray, th2_to_
 import ROOT
 import h5py
 
-def polar_root2hdf5(polar_root_file, polar_rsp_root_file ,hdf5_out_file):
+
+def polar_polarization_to_hdf5(polarization_root_file, hdf5_out_file):
+    """
+    
+    :param polarization_root_file: The ROOT file from which to build the response
+    :param hdf5_out_file: The output HDF5 file name
+    """
+    energy = []
+    degree = []
+    angle = []
+
+    with open_ROOT_file(polarization_root_file) as f:
+
+        tmp = [key.GetName() for key in f.GetListOfKeys()]
+        tmp = filter(lambda x: 'sim' in x, shit)
+        for tmp2 in tmp:
+
+            _, x, y, z = tmp.split('_')
+
+            ene.append(x)
+            degree.append(y)
+            angle.append(z)
+
+        with h5py.File(hdf5_out_file, 'w', libver='latest') as database:
+
+            for x in np.unique(ene):
+
+                ene_grp = database.create_group('ene_%d' % int(x))
+
+                for y in np.unique(degree):
+
+                    degree_grp = ene_grp.create_group('deg_%d' % int(y))
+
+                    for z in np.unique(angle):
+
+                        file_string = 'sim_%s_%s_%s' % (x, y, z)
+
+                        with open_ROOT_file(pol) as f:
+                            bins, _, hist = th2_to_arrays(f.Get(file_string))
+
+                        degree_grp.create_dataset('ang_%d' % int(z), data=hist, compression='lzf')
+
+            database.create_dataset('bins', data=bins, compression='lzf')
+            database.create_dataset('pol_ang', data=np.array([int(n) for n in np.unique(angle)]), compression='lzf')
+            database.create_dataset('pol_deg', data=np.array([int(n) for n in np.unique(degree)]), compression='lzf')
+
+
+def polar_spectra_to_hdf5(polar_root_file, polar_rsp_root_file, hdf5_out_file):
     """
     
     :param polar_root_file: The spectral ROOT file
@@ -11,24 +58,20 @@ def polar_root2hdf5(polar_root_file, polar_rsp_root_file ,hdf5_out_file):
     :param hdf5_out_file: the name of the output HDF5 file
     """
 
-
     # extract the info from the crappy root file
 
-    with h5py.File(hdf5_out_file,'w') as outfile:
-
+    with h5py.File(hdf5_out_file, 'w') as outfile:
 
         # first we do the RSP
-        
+
         rsp_grp = outfile.create_group('rsp')
-        
+
         with open_ROOT_file(polar_rsp_root_file) as f:
-
-
 
             matrix = th2_to_arrays(f.Get('rsp'))[-1]
 
             rsp_grp.create_dataset('matrix', data=matrix, compression='lzf')
-            
+
             ebounds = th2_to_arrays(f.Get('EM_bounds'))[-1]
 
             rsp_grp.create_dataset('ebounds', data=ebounds, compression='lzf')
@@ -36,25 +79,20 @@ def polar_root2hdf5(polar_root_file, polar_rsp_root_file ,hdf5_out_file):
             mc_low = th2_to_arrays(f.Get('ER_low'))[-1]
 
             rsp_grp.create_dataset('mc_low', data=mc_low, compression='lzf')
-            
+
             mc_high = th2_to_arrays(f.Get('ER_high'))[-1]
 
             rsp_grp.create_dataset('mc_high', data=mc_high, compression='lzf')
 
-
         # now we get the spectral informations
         keys_to_use = ['polar_out']
 
-
-        f=ROOT.TFile(polar_root_file)
-
+        f = ROOT.TFile(polar_root_file)
 
         extra_grp = outfile.create_group('extras')
-        
+
         for key in f.GetListOfKeys():
 
- 
-             
             name = key.GetName()
 
             if name not in keys_to_use:
@@ -62,34 +100,31 @@ def polar_root2hdf5(polar_root_file, polar_rsp_root_file ,hdf5_out_file):
 
                     # first we see if it is a TTree and then
                     # add a new group and attach its data
-                     
+
                     tree = tree_to_ndarray(f.Get(name))
 
                     new_grp = extra_grp.create_group(name)
 
                     for new_name in tree.dtype.names:
-                        
+
                         new_grp.create_dataset(new_name, data=tree[new_name], compression='lzf')
-                    
-                    
+
                 except:
 
                     # in this case we just want the actual data
 
                     data = th2_to_arrays(f.Get(name))[-1]
-        
+
                     extra_grp.create_dataset(name, data=data, compression='lzf')
-
-
 
         # now we will deal with the data that is important
 
         tmp = tree_to_ndarray(f.Get('polar_out'))
-        
-        outfile.create_dataset('energy',data=tmp['Energy'],compression='lzf')
 
-        outfile.create_dataset('dead_ratio',data=tmp['dead_ratio'],compression='lzf')
+        outfile.create_dataset('energy', data=tmp['Energy'], compression='lzf')
 
-        outfile.create_dataset('time',data=tmp['tunix'],compression='lzf')
+        outfile.create_dataset('dead_ratio', data=tmp['dead_ratio'], compression='lzf')
+
+        outfile.create_dataset('time', data=tmp['tunix'], compression='lzf')
 
         f.Close()
