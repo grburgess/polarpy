@@ -86,7 +86,7 @@ def polar_root2hdf5(polar_root_file, polar_rsp_root_file ,hdf5_out_file):
 
         tmp = tree_to_ndarray(f.Get('polar_out'))
         
-        outfile.create_dataset('energy',data=tmp['energy'],compression='lzf')
+        outfile.create_dataset('energy',data=tmp['Energy'],compression='lzf')
 
         outfile.create_dataset('dead_ratio',data=tmp['dead_ratio'],compression='lzf')
 
