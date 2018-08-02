@@ -51,7 +51,7 @@ class POLARData(object):
             self._dead_time_fraction = (f['dead_ratio'].value)[idx & idx2]
 
             # get the arrival time, in tunix of the events
-            self._time = (f['tunix'].value)[idx & idx2] - reference_time
+            self._time = (f['time'].value)[idx & idx2] - reference_time
 
             # digitize the ADC channels into bins
             # these bins are preliminary

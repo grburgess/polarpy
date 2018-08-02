@@ -4,7 +4,7 @@ import h5py
 
 from threeML import PluginPrototype
 from threeML.io.plotting.step_plot import step_plot
-from threeML.utils.statistics.likelihood_functions import poisson_observed_poisson_background
+from threeML.utils.statistics.likelihood_functions import poisson_observed_poisson_background, poisson_observed_gaussian_background
 from astromodels import Parameter, Uniform_prior
 import matplotlib.pyplot as plt
 
@@ -40,7 +40,17 @@ class PolarLike(PluginPrototype):
 
     def __init__(self, name, observation, background, response, exposure=1., background_exposure=1., verbose=False):
         """
-        
+
+
+
+        :param name:
+        :param observation:
+        :param background:
+        :param response:
+        :param exposure:
+        :param background_exposure:
+        :param verbose:
+
         """
 
         assert len(observation) == len(background)
