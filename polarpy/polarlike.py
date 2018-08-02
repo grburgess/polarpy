@@ -5,6 +5,7 @@ import h5py
 from threeML import PluginPrototype
 from threeML.io.plotting.step_plot import step_plot
 from threeML.utils.statistics.likelihood_functions import poisson_observed_poisson_background, poisson_observed_gaussian_background
+from threeML.utils.polarization.binned_polarization import BinnedModulationCurve
 from astromodels import Parameter, Uniform_prior
 import matplotlib.pyplot as plt
 
@@ -53,15 +54,27 @@ class PolarLike(PluginPrototype):
 
         """
 
-        assert len(observation) == len(background)
+        assert isinstance(observation, BinnedModulationCurve), 'The observation must be a BinnedModulationCurve'
+        assert isinstance(background, BinnedModulationCurve), 'The observation must be a BinnedModulationCurve'
 
-        self._total_counts = observation
-        self._background_counts = background
-        self._scale = exposure / background_exposure
-        self._exposure = exposure
-        self._background_exposure = background_exposure
+
+        #assert len(observation) == len(background)
+
+        # attach the required variables
+
+        self._observation = observation
+        self._background = background
+
+        self._total_counts = observation.counts
+        self._background_counts = background.counts
+        self._scale = observation.exposure / background.exposure
+        self._exposure = observation.exposure
+        self._background_exposure = background.background_exposure
 
         self._n_synthetic_datasets = 0
+
+
+        # set up the effective area correction
 
         self._nuisance_parameter = Parameter(
             "cons_%s" % name,
@@ -81,6 +94,10 @@ class PolarLike(PluginPrototype):
 
         self._verbose = verbose
 
+        # we can either attach or build a response
+
+        assert isinstance(response,str) or isinstance(PolarResponse), 'The response must be a file name or a PolarResponse'
+
         if isinstance(response, PolarResponse):
 
             self._response = response
@@ -89,9 +106,21 @@ class PolarLike(PluginPrototype):
 
             self._response = PolarResponse(response)
 
+        # attach the interpolators to the
+
         self._all_interp = self._response.interpolators
 
     def use_effective_area_correction(self, lower=0.5, upper=1.5):
+        """
+        Use an area constant to correct for response issues
+
+
+        :param lower:
+        :param upper:
+        :return:
+        """
+
+
 
         self._nuisance_parameter.free = True
         self._nuisance_parameter.bounds = (lower, upper)
@@ -101,6 +130,22 @@ class PolarLike(PluginPrototype):
             print('Using effective area correction')
 
     def fix_effective_area_correction(self, value=1):
+        """
+
+        fix the effective area correction to a particular values
+
+        :param value:
+        :return:
+        """
+
+        # allow the value to be outside the bounds
+        if self._nuisance_parameter.max_value < value:
+
+            self._nuisance_parameter.max_value = value + 0.1
+
+        elif self._nuisance_parameter.min_value > value:
+
+            self._nuisance_parameter.min_value = value = 0.1
 
         self._nuisance_parameter.fix = True
         self._nuisance_parameter.value = value
@@ -281,8 +326,18 @@ class PolarLike(PluginPrototype):
 
         model_counts = self._get_model_counts()
 
-        loglike, bkg_model = poisson_observed_poisson_background(self._total_counts, self._background_counts,
+        if self._background.is_poisson:
+
+
+            loglike, bkg_model = poisson_observed_poisson_background(self._total_counts, self._background_counts,
                                                                  self._scale, model_counts)
+
+        else:
+
+            loglike, bkg_model = poisson_observed_gaussian_background(self._total_counts, self._background_counts,
+                                                                     self._background.count_errors, model_counts)
+
+
 
         return np.sum(loglike)
 
