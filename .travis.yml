@@ -10,5 +10,5 @@ before_install:
 
 script:
   - docker run -e TRAVIS_BUILD_DIR\
-  -it grburgess/3ml-science:finished\
+  -it grburgess/polar:finished\
   /bin/sh -c 'source ${TRAVIS_BUILD_DIR}/ci/test.sh'
