@@ -9,4 +9,4 @@ before_install:
   - docker pull grburgess/3ml-science:finished
 
 script:
-  - docker run grburgess/3ml-science:finished /bin/sh -c 'source ${TRAVIS_BUILD_DIR}/ci/test.sh'
+  - docker run -it grburgess/3ml-science:finished /bin/sh -c 'source ${TRAVIS_BUILD_DIR}/ci/test.sh'
