@@ -7,4 +7,6 @@ services:
 
 before_install:
   - docker pull grburgess/3ml-science:finished
-  - docker run grburgess/3ml-science:finished /bin/sh -c 'cd /root/polarpy && ls'
+
+script:
+  - docker run grburgess/3ml-science:finished /bin/sh -c 'source ${TRAVIS_BUILD_DIR}/ci/test.sh'
