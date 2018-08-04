@@ -8,29 +8,9 @@ from threeML.utils.statistics.likelihood_functions import poisson_observed_poiss
 from astromodels import Parameter, Uniform_prior
 import matplotlib.pyplot as plt
 
-from polar_response import PolarResponse
-
+from polarpy.polar_response import PolarResponse
+#from polarpy.modulation_curve_file import ModulationCurveFile
 import collections
-
-# try:
-
-#     # see if we have mpi and/or are using parallel
-
-#     from mpi4py import MPI
-
-#     n_engines = MPI.COMM_WORLD.Get_size()
-#     if n_engines > 1: # need parallel capabilities
-#         using_mpi = True
-
-#         comm = MPI.COMM_WORLD
-#         rank = comm.Get_rank()
-
-#     else:
-
-#         using_mpi = False
-# except:
-
-#     using_mpi = False
 
 
 class PolarLike(PluginPrototype):
