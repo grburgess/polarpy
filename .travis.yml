@@ -9,4 +9,4 @@ before_install:
   - docker pull grburgess/polar:finished
 
 script:
-  - docker run -e TRAVIS_BUILD_DIR -it grburgess/polar:finished /bin/sh -c 'source ${TRAVIS_BUILD_DIR}/ci/test.sh'
+  - docker run -e TRAVIS_BUILD_DIR -v ${TRAVIS_BUILD_DIR}:${TRAVIS_BUILD_DIR} -it grburgess/polar:finished /bin/sh -c 'source ${TRAVIS_BUILD_DIR}/ci/test.sh'
