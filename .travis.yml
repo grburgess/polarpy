@@ -6,14 +6,17 @@ services:
   - docker
 
 before_install:
-  - docker pull grburgess/polar:finished
-
+  - |2
+    docker pull grburgess/polar:finished
+    echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
 script:
-  - docker run -e TRAVIS_BUILD_DIR \
+  - |2
+
+    docker run -e TRAVIS_BUILD_DIR \
                -e TRAVIS_PYTHON_VERSION=2.7 \
-#               -e TRAVIS_BRANCH \
-#               -e TRAVIS_BUILD_NUMBER \
-#               -e TRAVIS_EVENT_TYPE \
+               -e TRAVIS_BRANCH \
+               -e TRAVIS_BUILD_NUMBER \
+               -e TRAVIS_EVENT_TYPE \
                -v ${TRAVIS_BUILD_DIR}:${TRAVIS_BUILD_DIR} \
                -it grburgess/polar /bin/sh -c 'source ${TRAVIS_BUILD_DIR}/ci/test.sh'
 
