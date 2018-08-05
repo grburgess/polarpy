@@ -30,6 +30,10 @@ class ModulationCurveFile(object):
 
             assert np.all(count_errors.shape == counts.shape)
 
+        else:
+
+            self._is_poisson = True
+            
         self._count_errors = count_errors
         
         if tstart is not None:
