@@ -20,7 +20,7 @@ class ModulationCurveFile(object):
         
         assert len(scattering_bins) == n_bins + 1, 'The shape of the counts is incorrect' 
 
-        assert exposure >= 0.
+        assert np.all(exposures >= 0.), 'exposures are not positive'
 
 
         if count_errors is not None:
