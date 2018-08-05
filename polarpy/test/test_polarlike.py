@@ -49,3 +49,5 @@ def test_setting_model():
     polarlike.get_log_like()
 
     sim = polarlike.get_simulated_dataset()
+
+    assert isinstance(sim, ¿PolarLike)
