@@ -1,6 +1,7 @@
 from threeML.io.file_utils import sanitize_filename
 import os
 
+from polarpy.polar2hdf5 import polar_polarization_to_hdf5, polar_spectra_to_hdf5
 
 data_path = sanitize_filename(os.environ.get('POLAR_TEST_DATA_DIR'),abspath=True)
 
