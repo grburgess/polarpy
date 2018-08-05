@@ -334,6 +334,18 @@ class PolarLike(PluginPrototype):
 
         return self.get_log_like()
 
+    def writeto(self, file_name):
+
+        # first create a file container
+        observation_file = ModulationCurveFile.from_binned_modulation_curve(self._observation)
+
+        background_file = ModulationCurveFile.from_binned_modulation_curve(self._background)
+
+        observation_file.writeto("%s.h5"%file_name)
+
+        background_file.writeto("%s_bak.h5"%file_name)
+
+    
     def display(self, ax=None, show_data=True, show_model=True, model_kwargs={}, data_kwargs={}):
 
         if ax is None:
