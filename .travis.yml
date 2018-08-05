@@ -7,8 +7,9 @@ services:
 
 before_install:
   - |2
+#    echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
     docker pull grburgess/polar:finished
-    echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
+
 script:
   - |2
 

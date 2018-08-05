@@ -10,7 +10,7 @@ from astromodels import Parameter, Uniform_prior
 import matplotlib.pyplot as plt
 
 from polarpy.polar_response import PolarResponse
-#from polarpy.modulation_curve_file import ModulationCurveFile
+from polarpy.modulation_curve_file import ModulationCurveFile
 import collections
 
 
@@ -19,7 +19,7 @@ class PolarLike(PluginPrototype):
     Preliminary POLAR polarization plugin
     """
 
-    def __init__(self, name, observation, background, response, exposure=1., background_exposure=1., verbose=False):
+    def __init__(self, name, observation, background, response, interval_number=None, verbose=False):
         """
 
 
@@ -28,12 +28,21 @@ class PolarLike(PluginPrototype):
         :param observation:
         :param background:
         :param response:
-        :param exposure:
         :param background_exposure:
         :param verbose:
 
         """
 
+        if isinstance(observation, str):
+
+            assert interval_number is not None, 'must specify an interval number'
+            
+            # this is a file
+            
+
+            
+
+        
         assert isinstance(observation, BinnedModulationCurve), 'The observation must be a BinnedModulationCurve'
         assert isinstance(background, BinnedModulationCurve), 'The observation must be a BinnedModulationCurve'
 
