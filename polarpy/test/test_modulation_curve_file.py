@@ -1,8 +1,9 @@
 import numpy as np
+import os
 from polarpy.modulation_curve_file import ModulationCurveFile
 
-
-
+from threeML.io.file_utils import sanitize_filename
+data_path = sanitize_filename(os.environ.get('POLAR_TEST_DATA_DIR'),abspath=True)
 
 def test_constructor():
 
@@ -45,6 +46,8 @@ def test_mod_curve_file_writing():
 
     )
 
-    m.writeto('test_mc.h5')
+    write_path = os.path.join(data_path,'test_write_mc.h5')
+    
+    m.writeto(write_path)
 
     
