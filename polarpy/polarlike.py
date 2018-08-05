@@ -38,9 +38,20 @@ class PolarLike(PluginPrototype):
             assert interval_number is not None, 'must specify an interval number'
             
             # this is a file
-            
+            read_file = ModulationCurveFile.read(observation)
 
+            observation = read_file.to_binned_modulation_curve(interval=interval_number)
+
+        if isinstance(background, str):
+
+            assert interval_number is not None, 'must specify an interval number'
             
+            # this is a file
+            read_file = ModulationCurveFile.read(background)
+
+            background = read_file.to_binned_modulation_curve(interval=interval_number)
+
+
 
         
         assert isinstance(observation, BinnedModulationCurve), 'The observation must be a BinnedModulationCurve'
