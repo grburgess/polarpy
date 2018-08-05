@@ -146,7 +146,7 @@ class ModulationCurveFile(object):
 
             
                 int_grp.create_dataset('counts',data = self._counts[interval], compression='lzf' )
-                int_grp.create_dataset('exposure',data = self._exposure[interval], compression='lzf' )
+                int_grp.create_dataset('exposure',data = self._exposures[interval], compression='lzf' )
 
                 if self._count_errors is not None:
                     int_grp.create_dataset('count_errors',data = self._count_errors[interval], compression='lzf' )
