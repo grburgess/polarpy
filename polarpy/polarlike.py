@@ -69,7 +69,7 @@ class PolarLike(PluginPrototype):
         self._background_counts = background.counts
         self._scale = observation.exposure / background.exposure
         self._exposure = observation.exposure
-        self._background_exposure = background.background_exposure
+        self._background_exposure = background.exposure
 
         self._n_synthetic_datasets = 0
 
