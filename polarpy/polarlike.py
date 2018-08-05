@@ -335,7 +335,11 @@ class PolarLike(PluginPrototype):
         return self.get_log_like()
 
     def writeto(self, file_name):
-
+        """
+        Write the data to HDF5 modulation curve files. Both background and observation
+        files are created
+        :param file_name: the file name header. The .h5 extension is added automatically
+        """
         # first create a file container
         observation_file = ModulationCurveFile.from_binned_modulation_curve(self._observation)
 
