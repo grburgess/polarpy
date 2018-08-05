@@ -36,7 +36,7 @@ class PolarLike(PluginPrototype):
         if isinstance(observation, str):
 
             assert interval_number is not None, 'must specify an interval number'
-            
+
             # this is a file
             read_file = ModulationCurveFile.read(observation)
 
@@ -45,18 +45,14 @@ class PolarLike(PluginPrototype):
         if isinstance(background, str):
 
             assert interval_number is not None, 'must specify an interval number'
-            
+
             # this is a file
             read_file = ModulationCurveFile.read(background)
 
             background = read_file.to_binned_modulation_curve(interval=interval_number)
 
-
-
-        
         assert isinstance(observation, BinnedModulationCurve), 'The observation must be a BinnedModulationCurve'
         assert isinstance(background, BinnedModulationCurve), 'The observation must be a BinnedModulationCurve'
-
 
         #assert len(observation) == len(background)
 
@@ -72,7 +68,6 @@ class PolarLike(PluginPrototype):
         self._background_exposure = background.exposure
 
         self._n_synthetic_datasets = 0
-
 
         # set up the effective area correction
 
@@ -96,7 +91,8 @@ class PolarLike(PluginPrototype):
 
         # we can either attach or build a response
 
-        assert isinstance(response,str) or isinstance(response,PolarResponse), 'The response must be a file name or a PolarResponse'
+        assert isinstance(response, str) or isinstance(
+            response, PolarResponse), 'The response must be a file name or a PolarResponse'
 
         if isinstance(response, PolarResponse):
 
@@ -119,8 +115,6 @@ class PolarLike(PluginPrototype):
         :param upper:
         :return:
         """
-
-
 
         self._nuisance_parameter.free = True
         self._nuisance_parameter.bounds = (lower, upper)
@@ -186,8 +180,13 @@ class PolarLike(PluginPrototype):
 
         source_model_counts = self._get_model_counts()
 
-        _, background_model_counts = poisson_observed_poisson_background(self._total_counts, self._background_counts,
-                                                                          self._scale, source_model_counts)
+        if self._background.is_poisson:
+            _, background_model_counts = poisson_observed_poisson_background(
+                self._total_counts, self._background_counts, self._scale, source_model_counts)
+        else:
+
+            _, background_model_counts = poisson_observed_gaussian_background(
+                self._total_counts, self._background_counts, source_model_counts)
 
         # Now randomize the expectations
 
@@ -197,17 +196,16 @@ class PolarLike(PluginPrototype):
 
         randomized_background_counts = np.random.poisson(background_model_counts)
 
+        new_observation = self._observation.clone(new_counts=randomized_source_counts)
+
+        new_background = self._background.clone(new_counts=randomized_background_counts)
+
         new_plugin = PolarLike(
             name=new_name,
-            observation=randomized_source_counts,
-            background=randomized_background_counts,
+            observation=new_observation,
+            background=new_background,
             response=self._response,
-            exposure=self._exposure,
-        # here the background has been scaled already
-        # so the exposure should be equal
-            background_exposure=self._exposure,    #self._background_exposure,
-            verbose=False,
-        )
+            verbose=False,)
 
         return new_plugin
 
@@ -328,16 +326,13 @@ class PolarLike(PluginPrototype):
 
         if self._background.is_poisson:
 
-
             loglike, bkg_model = poisson_observed_poisson_background(self._total_counts, self._background_counts,
-                                                                 self._scale, model_counts)
+                                                                     self._scale, model_counts)
 
         else:
 
             loglike, bkg_model = poisson_observed_gaussian_background(self._total_counts, self._background_counts,
-                                                                     self._background.count_errors, model_counts)
-
-
+                                                                      self._background.count_errors, model_counts)
 
         return np.sum(loglike)
 
@@ -356,11 +351,10 @@ class PolarLike(PluginPrototype):
 
         background_file = ModulationCurveFile.from_binned_modulation_curve(self._background)
 
-        observation_file.writeto("%s.h5"%file_name)
+        observation_file.writeto("%s.h5" % file_name)
 
-        background_file.writeto("%s_bak.h5"%file_name)
+        background_file.writeto("%s_bak.h5" % file_name)
 
-    
     def display(self, ax=None, show_data=True, show_model=True, model_kwargs={}, data_kwargs={}):
 
         if ax is None:
@@ -375,8 +369,8 @@ class PolarLike(PluginPrototype):
 
             net_rate = (self._total_counts / self._exposure) - self._background_counts / self._background_exposure
 
-            errors = np.sqrt((self._total_counts / self._exposure) +
-                             (self._background_counts / self._background_exposure))
+            errors = np.sqrt((self._total_counts / self._exposure) + (self._background_counts /
+                                                                      self._background_exposure))
 
             ax.hlines(net_rate, self._response.scattering_bins_lo, self._response.scattering_bins_hi, **data_kwargs)
             ax.vlines(self._response.scattering_bins, net_rate - errors, net_rate + errors, **data_kwargs)
