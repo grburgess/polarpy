@@ -11,9 +11,9 @@ before_install:
 script:
   - docker run -e TRAVIS_BUILD_DIR \
                -e TRAVIS_PYTHON_VERSION=2.7 \
-               -e TRAVIS_BRANCH \
-               -e TRAVIS_BUILD_NUMBER \
-               -e TRAVIS_EVENT_TYPE \
+#               -e TRAVIS_BRANCH \
+#               -e TRAVIS_BUILD_NUMBER \
+#               -e TRAVIS_EVENT_TYPE \
                -v ${TRAVIS_BUILD_DIR}:${TRAVIS_BUILD_DIR} \
                -it grburgess/polar /bin/sh -c 'source ${TRAVIS_BUILD_DIR}/ci/test.sh'
 
