@@ -39,7 +39,7 @@ def test_setting_model():
     pl = Powerlaw()
     pz = LinearPolarization(10, 10)
 
-    sc = SpectralComponent(pl, pz)
+    sc = SpectralComponent('pl',pl, pz)
 
     ps = PointSource('test', 0, 0, spectral_components=[sc])
     model = Model(ps)
