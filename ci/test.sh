@@ -20,3 +20,5 @@ cd my_work_dir
 
 
 python -m pytest -vv --cov=polarpy
+
+codecov -t 4ffa7470-e124-4021-a40c-6a6be5a560a4
