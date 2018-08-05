@@ -50,4 +50,4 @@ def test_setting_model():
 
     sim = polarlike.get_simulated_dataset()
 
-    assert isinstance(sim, ¿PolarLike)
+    assert isinstance(sim, PolarLike)
