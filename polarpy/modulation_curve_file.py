@@ -53,7 +53,11 @@ class ModulationCurveFile(object):
         ## fix this later
         self._sys_errors = sys_errors
         
-            
+        if instrument is None:
+            instrument = 'Unknown'
+
+        if mission is None:
+            mission = 'Unknown'
         
         self._counts = counts
         self._scattering_bins = scattering_bins
@@ -64,8 +68,6 @@ class ModulationCurveFile(object):
         self._tstop = tstop
         self._instrument = instrument
         self._mission = mission
-
-
         
     @classmethod
     def read(cls, file_name):
@@ -172,15 +174,25 @@ class ModulationCurveFile(object):
             f.attrs['is_poisson'] = self._is_poisson
             f.attrs['instrument'] = self._instrument
             f.attrs['mission'] = self._mission
-
+            f.attrs['scale_factor'] = self._scale_factor
+            
     def to_binned_modulation_curve(self, interval=0):
 
+        count_errors = None
+        sys_errors = None
+        if self._count_errors is not None:
+            count_errors = self._count_errors[interval]
+
+        if self._sys_errors is not None:
+            sys_errors = self._sys_errors[interval]
+
+        
         return BinnedModulationCurve(counts=self._counts[interval],
                                      exposure=self._exposures[interval],
                                      abounds=self._scattering_bins,
-                                     count_errors = self._count_errors[interval],
-                                     sys_errors = self._sys_errors[interval],
-                                     scale_factors=self._scale_factor,
+                                     count_errors = count_errors,
+                                     sys_errors = sys_errors,
+                                     scale_factor = self._scale_factor,
                                      is_poisson=self._is_poisson,
                                      instrument = self._instrument,
                                      tstart = self._tstart,
