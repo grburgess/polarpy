@@ -103,7 +103,7 @@ class ModulationCurveFile(object):
                 if tstart_flag:
                     try:
 
-                        tstart.append(int_grp['tstart'].value)
+                        tstart.append(int_grp.attrs['tstart'])
 
                     except:
 
@@ -113,7 +113,7 @@ class ModulationCurveFile(object):
                 if tstop_flag:
                     try:
 
-                        tstop.append(int_grp['tstop'].value)
+                        tstop.append(int_grp.attrs['tstop'])
 
                     except:
 
@@ -148,14 +148,16 @@ class ModulationCurveFile(object):
                 int_grp.create_dataset('counts',data = self._counts[interval], compression='lzf' )
                 int_grp.create_dataset('exposure',data = self._exposures[interval], compression='lzf' )
 
+                
                 if self._count_errors is not None:
                     int_grp.create_dataset('count_errors',data = self._count_errors[interval], compression='lzf' )
 
                 if self._tstart is not None:
-                    int_grp.create_dataset('tstart',data = self._tstart[interval], compression='lzf' )
+                    int_grp.attrs['tstart'] = self._tstart[interval]
 
                 if self._tstop is not None:
-                    int_grp.create_dataset('tstop',data = self._tstop[interval], compression='lzf' )
+                    int_grp.attrs['tstop'] = self._tstop[interval]
+ 
                 
 
                 
