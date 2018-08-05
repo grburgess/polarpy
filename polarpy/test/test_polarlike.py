@@ -41,7 +41,7 @@ def test_setting_model():
 
     sc = SpectralComponent('pl',pl, pz)
 
-    ps = PointSource('test', 0, 0, spectral_components=[sc])
+    ps = PointSource('test', 0, 0, components=[sc])
     model = Model(ps)
 
     polarlike.set_model(model)
