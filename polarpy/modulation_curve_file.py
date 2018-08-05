@@ -30,6 +30,8 @@ class ModulationCurveFile(object):
 
             assert np.all(count_errors.shape == counts.shape)
 
+        self._count_errors = count_errors
+        
         if tstart is not None:
 
             tstart = np.atleast_1d(tstart)
