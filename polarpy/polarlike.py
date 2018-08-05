@@ -96,7 +96,7 @@ class PolarLike(PluginPrototype):
 
         # we can either attach or build a response
 
-        assert isinstance(response,str) or isinstance(PolarResponse), 'The response must be a file name or a PolarResponse'
+        assert isinstance(response,str) or isinstance(response,PolarResponse), 'The response must be a file name or a PolarResponse'
 
         if isinstance(response, PolarResponse):
 
