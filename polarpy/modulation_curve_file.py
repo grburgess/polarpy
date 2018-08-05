@@ -94,7 +94,7 @@ class ModulationCurveFile(object):
                 int_grp = f['interval_%d' % interval]
 
                 counts.append(int_grp['counts'].value)
-                exposures.append(int_grp['exposure'].value)
+                exposures.append(int_grp.attrs['exposure'])
 
                 if not is_poisson:
 
@@ -146,7 +146,7 @@ class ModulationCurveFile(object):
 
             
                 int_grp.create_dataset('counts',data = self._counts[interval], compression='lzf' )
-                int_grp.create_dataset('exposure',data = self._exposures[interval], compression='lzf' )
+                int_grp.attrs['exposure']=self._exposures[interval]
 
                 
                 if self._count_errors is not None:
