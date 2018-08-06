@@ -61,6 +61,11 @@ def test_countructor():
 
     polarlike = PolarLike('test', observation=obs, background=bak, response=outfile)
 
+
+    polarlike.use_effective_area_correction()
+
+    polarlike.fix_effective_area_correction(1.)
+
     
 def test_setting_model():
 
@@ -81,7 +86,7 @@ def test_setting_model():
 
     polarlike.get_log_like()
 
-    
+    polarlike.display()
 
 
 def test_simulations():
@@ -149,5 +154,23 @@ def test_simulations():
 
     assert isinstance(sim, PolarLike)
 
+def test_writing():
+
+    scattering_bins = np.linspace(0,360,31)
+    counts = np.ones(30)
+    count_errors = np.ones(30) * 0.5
+
+    m = ModulationCurveFile(counts=counts,
+                            scattering_bins=scattering_bins,
+                            exposures=1.
+    )
 
     
+    obs = m.to_binned_modulation_curve(interval=0)
+
+    bak = m.to_binned_modulation_curve(interval=0)
+
+    
+    polarlike = PolarLike('test', observation=obs, background=bak, response=prsp)
+
+    polarlike.writeto('dummy')
