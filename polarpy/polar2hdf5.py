@@ -133,8 +133,12 @@ if has_root:
 
             outfile.create_dataset('energy', data=tmp['Energy'], compression='lzf')
 
+            outfile.create_dataset('scatter_angle', data=tmp['scatter_angle'], compression='lzf')
+            
             outfile.create_dataset('dead_ratio', data=tmp['dead_ratio'], compression='lzf')
 
             outfile.create_dataset('time', data=tmp['tunix'], compression='lzf')
 
+            
+            
             f.Close()
