@@ -4,6 +4,8 @@ import os
 from polarpy.polar_response import PolarResponse
 from polarpy.polarlike import PolarLike
 from polarpy.polar2hdf5 import polar_polarization_to_hdf5
+from polarpy.modulation_curve_file import ModulationCurveFile
+from threeML.utils.polarization.binned_polarization import BinnedModulationCurve
 
 from threeML.io.file_utils import sanitize_filename
 data_path = sanitize_filename(os.environ.get('POLAR_TEST_DATA_DIR'), abspath=True)
@@ -29,6 +31,37 @@ def test_countructor():
     polarlike = PolarLike('test', observation=obs, background=bak, response=prsp, interval_number=1)
 
 
+    assert isinstance(polarlike._observation, BinnedModulationCurve)
+    assert isinstance(polarlike._background, BinnedModulationCurve)
+
+    scattering_bins = np.linspace(0,360,5)
+    counts = np.ones(4)
+
+    count_errors = np.ones(4) * 0.5
+
+    m = ModulationCurveFile(counts=counts,
+                            scattering_bins=scattering_bins,
+                            exposures=1.
+
+
+    )
+
+    obs = m.to_binned_modulation_curve(interval=1)
+
+    bak = m.to_binned_modulation_curve(interval=1)
+
+
+    polarlike = PolarLike('test', observation=obs, background=bak, response=prsp, interval_number=1)
+
+
+    assert isinstance(polarlike._observation, BinnedModulationCurve)
+    assert isinstance(polarlike._background, BinnedModulationCurve)
+
+    # now test with rsp as file neame
+
+    polarlike = PolarLike('test', observation=obs, background=bak, response=outfile, interval_number=1)
+
+    
 def test_setting_model():
 
     obs = os.path.join(data_path, 'test_mcf.h5')
@@ -48,6 +81,77 @@ def test_setting_model():
 
     polarlike.get_log_like()
 
+    
+
+
+def test_simulations():
+
+
+
+    scattering_bins = np.linspace(0,360,5)
+    counts = np.ones(4)
+
+    count_errors = np.ones(4) * 0.5
+
+    m = ModulationCurveFile(counts=counts,
+                            scattering_bins=scattering_bins,
+                            exposures=1.
+
+
+    )
+
+    obs = m.to_binned_modulation_curve(interval=1)
+
+    bak = m.to_binned_modulation_curve(interval=1)
+
+    
+    polarlike = PolarLike('test', observation=obs, background=bak, response=prsp, interval_number=1)
+
+    pl = Powerlaw()
+    pz = LinearPolarization(10, 10)
+
+    sc = SpectralComponent('pl',pl, pz)
+
+    ps = PointSource('test', 0, 0, components=[sc])
+    model = Model(ps)
+
+    polarlike.set_model(model)
+
+    polarlike.get_log_like()
+
     sim = polarlike.get_simulated_dataset()
 
     assert isinstance(sim, PolarLike)
+
+    m = ModulationCurveFile(counts=counts,
+                            scattering_bins=scattering_bins,
+                            exposures=1.,
+                            count_errors = count_errors
+
+
+    )
+
+    
+    bak = m.to_binned_modulation_curve(interval=1)
+
+    
+    polarlike = PolarLike('test', observation=obs, background=bak, response=prsp, interval_number=1)
+
+    pl = Powerlaw()
+    pz = LinearPolarization(10, 10)
+
+    sc = SpectralComponent('pl',pl, pz)
+
+    ps = PointSource('test', 0, 0, components=[sc])
+    model = Model(ps)
+
+    polarlike.set_model(model)
+
+    polarlike.get_log_like()
+
+    sim = polarlike.get_simulated_dataset()
+
+    assert isinstance(sim, PolarLike)
+
+
+    
