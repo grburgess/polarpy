@@ -206,7 +206,7 @@ class ModulationCurveFile(object):
 
         """
         return cls(counts=binned_mod_curve.counts,
-                   exposures=binned_mod_curve.exposures,
+                   exposures=binned_mod_curve.exposure,
                    scattering_bins=binned_mod_curve.abounds,
                    count_errors=binned_mod_curve.count_errors,
                    sys_errors=binned_mod_curve.sys_errors,
