@@ -106,9 +106,9 @@ class PolarLike(PluginPrototype):
 
         self._all_interp = self._response.interpolators
 
-        assert self._response.n_scatter_bins == len(self._observation.counts), 'observation counts shape does not agree with response shape'
+        assert self._response.n_scattering_bins == len(self._observation.counts), 'observation counts shape does not agree with response shape'
 
-        assert self._response.n_scatter_bins == len(self._background.counts), 'background counts shape does not agree with response shape'
+        assert self._response.n_scattering_bins == len(self._background.counts), 'background counts shape does not agree with response shape'
 
         
     def use_effective_area_correction(self, lower=0.5, upper=1.5):
