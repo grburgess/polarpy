@@ -46,12 +46,12 @@ def test_countructor():
 
     )
 
-    obs = m.to_binned_modulation_curve(interval=1)
+    obs = m.to_binned_modulation_curve(interval=0)
 
-    bak = m.to_binned_modulation_curve(interval=1)
+    bak = m.to_binned_modulation_curve(interval=0)
 
 
-    polarlike = PolarLike('test', observation=obs, background=bak, response=prsp, interval_number=1)
+    polarlike = PolarLike('test', observation=obs, background=bak, response=prsp)
 
 
     assert isinstance(polarlike._observation, BinnedModulationCurve)
@@ -59,7 +59,7 @@ def test_countructor():
 
     # now test with rsp as file neame
 
-    polarlike = PolarLike('test', observation=obs, background=bak, response=outfile, interval_number=1)
+    polarlike = PolarLike('test', observation=obs, background=bak, response=outfile)
 
     
 def test_setting_model():
@@ -100,12 +100,12 @@ def test_simulations():
 
     )
 
-    obs = m.to_binned_modulation_curve(interval=1)
+    obs = m.to_binned_modulation_curve(interval=0)
 
-    bak = m.to_binned_modulation_curve(interval=1)
+    bak = m.to_binned_modulation_curve(interval=0)
 
     
-    polarlike = PolarLike('test', observation=obs, background=bak, response=prsp, interval_number=1)
+    polarlike = PolarLike('test', observation=obs, background=bak, response=prsp)
 
     pl = Powerlaw()
     pz = LinearPolarization(10, 10)
@@ -132,10 +132,10 @@ def test_simulations():
     )
 
     
-    bak = m.to_binned_modulation_curve(interval=1)
+    bak = m.to_binned_modulation_curve(interval=0)
 
     
-    polarlike = PolarLike('test', observation=obs, background=bak, response=prsp, interval_number=1)
+    polarlike = PolarLike('test', observation=obs, background=bak, response=prsp, interval_number=0)
 
     pl = Powerlaw()
     pz = LinearPolarization(10, 10)
