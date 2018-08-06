@@ -34,10 +34,10 @@ def test_countructor():
     assert isinstance(polarlike._observation, BinnedModulationCurve)
     assert isinstance(polarlike._background, BinnedModulationCurve)
 
-    scattering_bins = np.linspace(0,360,5)
-    counts = np.ones(4)
+    scattering_bins = np.linspace(0,360,31)
+    counts = np.ones(30)
 
-    count_errors = np.ones(4) * 0.5
+    count_errors = np.ones(30) * 0.5
 
     m = ModulationCurveFile(counts=counts,
                             scattering_bins=scattering_bins,
@@ -86,20 +86,16 @@ def test_setting_model():
 
 def test_simulations():
 
-
-
-    scattering_bins = np.linspace(0,360,5)
-    counts = np.ones(4)
-
-    count_errors = np.ones(4) * 0.5
+    scattering_bins = np.linspace(0,360,31)
+    counts = np.ones(30)
+    count_errors = np.ones(30) * 0.5
 
     m = ModulationCurveFile(counts=counts,
                             scattering_bins=scattering_bins,
                             exposures=1.
-
-
     )
 
+    
     obs = m.to_binned_modulation_curve(interval=0)
 
     bak = m.to_binned_modulation_curve(interval=0)
