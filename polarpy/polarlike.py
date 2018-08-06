@@ -191,7 +191,7 @@ class PolarLike(PluginPrototype):
         else:
 
             _, background_model_counts = poisson_observed_gaussian_background(
-                self._total_counts, self._background_counts, source_model_counts)
+                self._total_counts, self._background_counts, self._background.count_errors, source_model_counts)
 
         # Now randomize the expectations
 
