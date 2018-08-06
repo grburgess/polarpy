@@ -66,77 +66,34 @@ class PolarResponse(object):
 
             all_interp = []
 
-            # fix this shit later
-            if False:#using_mpi:
-                part_results=[]
-
-                size_per_rank = float(len(bin_center)/n_engines)
-                lower_bound = int(np.floor(rank*size_per_rank))
-                upper_bound = int(np.floor((rank+1)*size_per_rank))
-
-                iterartor = range(len(bin_center))
-
-                for i in iterartor[lower_bound:upper_bound]: 
-
-                    data = []
-                    #energy = get_energy()
-
-                    for ene in energy:
-
-                        for ang in pol_ang:
-
-                            for deg in pol_deg:
-
-                                _, hist = get_hist(ene,deg,ang)
 
 
-                                data.append(hist[i])
-                    data = np.array(data).reshape((energy.shape[0],
-                                                   pol_ang.shape[0],
-                                                   pol_deg.shape[0]))
+            for i, bm in enumerate(bin_center):
+
+                data = []
+                #energy = get_energy()
+
+                for ene in energy:
+
+                    for ang in pol_ang:
+
+                        for deg in pol_deg:
+
+                            hist = self._get_hist(ene,deg,ang)
+
+
+                            data.append(hist[i])
+                data = np.array(data).reshape((energy.shape[0],
+                                               pol_ang.shape[0],
+                                               pol_deg.shape[0]))
 
 
 
 
-                    this_interpolator = interpolate.RegularGridInterpolator((energy,pol_ang,pol_deg), data)
-
-                    part_results.append(this_interpolator)
-
-            
-                    all_parts = comm.gather(part_results, root=0)
+                this_interpolator = interpolate.RegularGridInterpolator((energy,pol_ang,pol_deg), data)
 
 
-                    if rank ==0:
-
-                        all_interp = np.concatenate(all_parts)
-
-            else:
-                for i, bm in enumerate(bin_center):
-
-                    data = []
-                    #energy = get_energy()
-
-                    for ene in energy:
-
-                        for ang in pol_ang:
-
-                            for deg in pol_deg:
-
-                                hist = self._get_hist(ene,deg,ang)
-
-
-                                data.append(hist[i])
-                    data = np.array(data).reshape((energy.shape[0],
-                                                   pol_ang.shape[0],
-                                                   pol_deg.shape[0]))
-
-
-
-
-                    this_interpolator = interpolate.RegularGridInterpolator((energy,pol_ang,pol_deg), data)
-
-
-                    all_interp.append(this_interpolator)
+                all_interp.append(this_interpolator)
                 
             self._all_interp = all_interp
             
