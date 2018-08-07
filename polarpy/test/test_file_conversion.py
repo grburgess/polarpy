@@ -27,6 +27,7 @@ def test_data_conversion():
 
     root_file = os.path.join(data_path,'fake_polar_data.root')
     rmf_file = os.path.join(data_path,'rmf.root')
+    prsp_file = os.path.join(data_path,'fold_spec.root')
     
     outfile = 'testdata.h5'
     
@@ -34,5 +35,5 @@ def test_data_conversion():
 
     # now make sure the polar response works
 
-    pd = POLARData(polar_hdf5_file=outfile, polar_hdf5_response=None, reference_time=0.)
+    pd = POLARData(polar_hdf5_file=outfile, polar_hdf5_response=prsp, reference_time=0.)
 
