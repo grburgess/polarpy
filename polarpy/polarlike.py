@@ -360,8 +360,15 @@ class PolarLike(PluginPrototype):
 
         background_file.writeto("%s_bak.h5" % file_name)
 
-    def display(self, ax=None, show_data=True, show_model=True, model_kwargs={}, data_kwargs={}):
+    def display(self, ax=None, show_data=True, show_model=True, show_total=False ,model_kwargs={}, data_kwargs={}):
 
+
+
+        if show_total:
+            show_model = False
+            show_data = False
+            
+        
         if ax is None:
 
             fig, ax = plt.subplots()
@@ -370,6 +377,31 @@ class PolarLike(PluginPrototype):
 
             fig = ax.get_figure()
 
+
+        if show_total:
+
+            total_rate = self._total_counts / self._exposure
+            bkg_rate = self._background_counts / self._background_exposure
+
+            total_errors = np.sqrt(total_rate)
+
+
+            if self._background.is_poisson:
+
+                bkg_errors = np.sqrt(bkg_rate)
+
+            else:
+
+                bkg_errors = self._background.count_errors
+
+            ax.hlines(total_rate, self._response.scattering_bins_lo, self._response.scattering_bins_hi, color='#7D0505' ,**data_kwargs)
+            ax.vlines(self._response.scattering_bins, total_rate - total_errors, total_rate + total_errors, color='#7D0505', **data_kwargs)
+
+            ax.hlines(bkg_rate, self._response.scattering_bins_lo, self._response.scattering_bins_hi, color='#0D5BAE' ,**data_kwargs)
+            ax.vlines(self._response.scattering_bins, bkg_rate - bkg_errors, bkg_rate + bkg_errors, color='#0D5BAE', **data_kwargs)
+
+                
+            
         if show_data:
 
             net_rate = (self._total_counts / self._exposure) - self._background_counts / self._background_exposure

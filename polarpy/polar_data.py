@@ -6,7 +6,7 @@ import h5py
 
 
 class POLARData(object):
-    def __init__(self, polar_hdf5_file, polar_hdf5_response, reference_time=0.):
+    def __init__(self, polar_hdf5_file, polar_hdf5_response=None, reference_time=0.):
         """
         container class that converts raw POLAR HDF5 data into useful python
         variables
@@ -84,15 +84,20 @@ class POLARData(object):
 
         # bin the scattering_angles
 
-        with h5py.File(polar_hdf5_response, 'r') as f:
+        if polar_hdf5_response is not None:
 
-            scatter_bounds = f['bins'].value
+            with h5py.File(polar_hdf5_response, 'r') as f:
+
+                scatter_bounds = f['bins'].value
 
 
-        self._scattering_bins = scatter_bounds
-        self._binned_scattering_angles = np.digitize(self._scattering_angles, scatter_bounds)
-        
+            self._scattering_bins = scatter_bounds
+            self._binned_scattering_angles = np.digitize(self._scattering_angles, scatter_bounds)
 
+        else:
+
+            self._scattering_bins = None
+            self._binned_scattering_angles = None
         
     @property
     def pha(self):
@@ -133,3 +138,10 @@ class POLARData(object):
     def n_scattering_bins(self):
 
         return len(self._scattering_bins) - 1
+
+    @property
+    def scattering_edges(self):
+
+        return self._scattering_bins
+
+        
