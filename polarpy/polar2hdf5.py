@@ -56,6 +56,18 @@ if has_root:
 
                             degree_grp.create_dataset('ang_%d' % int(z), data=hist, compression='lzf')
 
+                            
+                if np.min(bins) < 0:
+                    # we will try to automatically correct for the badly specified bins
+                    bins = np.array(bins)
+
+                    bins += -np.min(bins)
+
+                    assert np.min(bins) >=0, 'The scattering bins have egdes less than zero'
+                    assert np.max(bins) <=360, 'The scattering bins have egdes greater than 360'
+
+                    
+                
                 database.create_dataset('bins', data=bins, compression='lzf')
                 database.create_dataset('pol_ang', data=np.array([int(n) for n in np.unique(angle)]), compression='lzf')
                 database.create_dataset('pol_deg', data=np.array([int(n) for n in np.unique(degree)]), compression='lzf')
