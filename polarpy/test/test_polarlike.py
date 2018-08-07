@@ -28,7 +28,7 @@ def test_countructor():
     obs = os.path.join(data_path, 'test_mcf.h5')
     bak = os.path.join(data_path, 'test_mcf.h5')
 
-    polarlike = PolarLike('test', observation=obs, background=bak, response=prsp, interval_number=1)
+    polarlike = PolarLike('test', observation=obs, background=bak, response=prsp, interval_number=1, verbose=True)
 
 
     assert isinstance(polarlike._observation, BinnedModulationCurve)
@@ -87,6 +87,8 @@ def test_setting_model():
     polarlike.get_log_like()
 
     polarlike.display()
+
+    polarlike.display(show_total=True)
 
 
 def test_simulations():

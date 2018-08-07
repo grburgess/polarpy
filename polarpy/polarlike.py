@@ -85,7 +85,7 @@ class PolarLike(PluginPrototype):
 
         super(PolarLike, self).__init__(name, nuisance_parameters)
 
-        self._source_name = None
+        #self._source_name = None
 
         self._verbose = verbose
 
@@ -225,12 +225,12 @@ class PolarLike(PluginPrototype):
 
             return
 
-        if self._source_name is not None:
+        # if self._source_name is not None:
 
-            # Make sure that the source is in the model
-            assert self._source_name in likelihood_model_instance.sources, \
-                                                "This XYLike plugin refers to the source %s, " \
-                                                "but that source is not in the likelihood model" % (self._source_name)
+        #     # Make sure that the source is in the model
+        #     assert self._source_name in likelihood_model_instance.sources, \
+        #                                         "This XYLike plugin refers to the source %s, " \
+        #                                         "but that source is not in the likelihood model" % (self._source_name)
 
         for k, v in likelihood_model_instance.free_parameters.items():
 
@@ -252,37 +252,37 @@ class PolarLike(PluginPrototype):
 
     def _get_diff_flux_and_integral(self, likelihood_model):
 
-        if self._source_name is None:
+        #if self._source_name is None:
 
-            n_point_sources = likelihood_model.get_number_of_point_sources()
+        n_point_sources = likelihood_model.get_number_of_point_sources()
 
-            # Make a function which will stack all point sources (OGIP do not support spatial dimension)
+        # Make a function which will stack all point sources (OGIP do not support spatial dimension)
 
-            def differential_flux(energies):
-                fluxes = likelihood_model.get_point_source_fluxes(0, energies, tag=self._tag)
+        def differential_flux(energies):
+            fluxes = likelihood_model.get_point_source_fluxes(0, energies, tag=self._tag)
 
-                # If we have only one point source, this will never be executed
-                for i in range(1, n_point_sources):
-                    fluxes += likelihood_model.get_point_source_fluxes(i, energies, tag=self._tag)
+            # If we have only one point source, this will never be executed
+            for i in range(1, n_point_sources):
+                fluxes += likelihood_model.get_point_source_fluxes(i, energies, tag=self._tag)
 
-                return fluxes
+            return fluxes
 
-        else:
+        # else:
 
-            # This SpectrumLike dataset refers to a specific source
+        #     # This SpectrumLike dataset refers to a specific source
 
-            # Note that we checked that self._source_name is in the model when the model was set
+        #     # Note that we checked that self._source_name is in the model when the model was set
 
-            try:
+        #     try:
 
-                def differential_flux(energies):
+        #         def differential_flux(energies):
 
-                    return likelihood_model.sources[self._source_name](energies, tag=self._tag)
+        #             return likelihood_model.sources[self._source_name](energies, tag=self._tag)
 
-            except KeyError:
+        #     except KeyError:
 
-                raise KeyError("This XYLike plugin has been assigned to source %s, "
-                               "which does not exist in the current model" % self._source_name)
+        #         raise KeyError("This XYLike plugin has been assigned to source %s, "
+        #                        "which does not exist in the current model" % self._source_name)
 
         # The following integrates the diffFlux function using Simpson's rule
         # This assume that the intervals e1,e2 are all small, which is guaranteed
