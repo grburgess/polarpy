@@ -1,17 +1,16 @@
-import numpy as np
-import scipy.interpolate as interpolate
-import h5py
+import collections
 
+import matplotlib.pyplot as plt
+import numpy as np
+from astromodels import Parameter, Uniform_prior
 from threeML import PluginPrototype
 from threeML.io.plotting.step_plot import step_plot
-from threeML.utils.statistics.likelihood_functions import poisson_observed_poisson_background, poisson_observed_gaussian_background
 from threeML.utils.polarization.binned_polarization import BinnedModulationCurve
-from astromodels import Parameter, Uniform_prior
-import matplotlib.pyplot as plt
+from threeML.utils.statistics.likelihood_functions import poisson_observed_poisson_background, \
+    poisson_observed_gaussian_background
 
-from polarpy.polar_response import PolarResponse
 from polarpy.modulation_curve_file import ModulationCurveFile
-import collections
+from polarpy.polar_response import PolarResponse
 
 
 class PolarLike(PluginPrototype):
@@ -24,26 +23,30 @@ class PolarLike(PluginPrototype):
 
 
 
+        :param interval_number:
         :param name:
         :param observation:
         :param background:
         :param response:
-        :param background_exposure:
+
         :param verbose:
 
         """
 
-        if isinstance(observation, str):
+        # if we pass a string, there may be multiple time intervals
+        # saved so we must specify a time interval
 
+        if isinstance(observation, str):
             assert interval_number is not None, 'must specify an interval number'
 
             # this is a file
             read_file = ModulationCurveFile.read(observation)
 
+            # create the bmc
             observation = read_file.to_binned_modulation_curve(interval=interval_number)
 
+        # the same applies for the background
         if isinstance(background, str):
-
             assert interval_number is not None, 'must specify an interval number'
 
             # this is a file
@@ -53,8 +56,6 @@ class PolarLike(PluginPrototype):
 
         assert isinstance(observation, BinnedModulationCurve), 'The observation must be a BinnedModulationCurve'
         assert isinstance(background, BinnedModulationCurve), 'The observation must be a BinnedModulationCurve'
-
-        #assert len(observation) == len(background)
 
         # attach the required variables
 
@@ -66,6 +67,10 @@ class PolarLike(PluginPrototype):
         self._scale = observation.exposure / background.exposure
         self._exposure = observation.exposure
         self._background_exposure = background.exposure
+
+        # now do some double checks
+
+        assert len(self._total_counts) == len(self._background)
 
         self._n_synthetic_datasets = 0
 
@@ -83,9 +88,9 @@ class PolarLike(PluginPrototype):
         nuisance_parameters = collections.OrderedDict()
         nuisance_parameters[self._nuisance_parameter.name] = self._nuisance_parameter
 
-        super(PolarLike, self).__init__(name, nuisance_parameters)
+        # pass to the plugin proto
 
-        #self._source_name = None
+        super(PolarLike, self).__init__(name, nuisance_parameters)
 
         self._verbose = verbose
 
@@ -106,15 +111,13 @@ class PolarLike(PluginPrototype):
 
         self._all_interp = self._response.interpolators
 
-        assert self._response.n_scattering_bins == len(self._observation.counts), 'observation counts shape does not agree with response shape'
+        # we also make sure the lengths match up here
+        assert self._response.n_scattering_bins == len(
+            self._observation.counts), 'observation counts shape does not agree with response shape'
 
-        assert self._response.n_scattering_bins == len(self._background.counts), 'background counts shape does not agree with response shape'
-
-        
     def use_effective_area_correction(self, lower=0.5, upper=1.5):
         """
         Use an area constant to correct for response issues
-
 
         :param lower:
         :param upper:
@@ -125,7 +128,6 @@ class PolarLike(PluginPrototype):
         self._nuisance_parameter.bounds = (lower, upper)
         self._nuisance_parameter.prior = Uniform_prior(lower_bound=lower, upper_bound=upper)
         if self._verbose:
-
             print('Using effective area correction')
 
     def fix_effective_area_correction(self, value=1):
@@ -150,7 +152,6 @@ class PolarLike(PluginPrototype):
         self._nuisance_parameter.value = value
 
         if self._verbose:
-
             print('Fixing effective area correction')
 
     @property
@@ -210,7 +211,7 @@ class PolarLike(PluginPrototype):
             observation=new_observation,
             background=new_background,
             response=self._response,
-            verbose=False,)
+            verbose=False, )
 
         return new_plugin
 
@@ -222,7 +223,6 @@ class PolarLike(PluginPrototype):
         """
 
         if likelihood_model_instance is None:
-
             return
 
         # if self._source_name is not None:
@@ -235,11 +235,9 @@ class PolarLike(PluginPrototype):
         for k, v in likelihood_model_instance.free_parameters.items():
 
             if 'polarization.degree' in k:
-
                 self._pol_degree = v
 
             if 'polarization.angle' in k:
-
                 self._pol_angle = v
 
         # now we need to get the intergal flux
@@ -251,8 +249,6 @@ class PolarLike(PluginPrototype):
         self._likelihood_model = likelihood_model_instance
 
     def _get_diff_flux_and_integral(self, likelihood_model):
-
-        #if self._source_name is None:
 
         n_point_sources = likelihood_model.get_number_of_point_sources()
 
@@ -266,23 +262,6 @@ class PolarLike(PluginPrototype):
                 fluxes += likelihood_model.get_point_source_fluxes(i, energies, tag=self._tag)
 
             return fluxes
-
-        # else:
-
-        #     # This SpectrumLike dataset refers to a specific source
-
-        #     # Note that we checked that self._source_name is in the model when the model was set
-
-        #     try:
-
-        #         def differential_flux(energies):
-
-        #             return likelihood_model.sources[self._source_name](energies, tag=self._tag)
-
-        #     except KeyError:
-
-        #         raise KeyError("This XYLike plugin has been assigned to source %s, "
-        #                        "which does not exist in the current model" % self._source_name)
 
         # The following integrates the diffFlux function using Simpson's rule
         # This assume that the intervals e1,e2 are all small, which is guaranteed
@@ -304,15 +283,18 @@ class PolarLike(PluginPrototype):
 
         # first we need to get the integrated expectation from the spectrum
 
-        summed_hist = np.zeros(self._response.n_scattering_bins)
         intergal_spectrum = np.array(
             [self._integral_flux(emin, emax) for emin, emax in zip(self._response.ene_lo, self._response.ene_hi)])
+
+        # we evaluate at the center of the bin. the bin widths are already included
         eval_points = np.array(
             [[ene, self._pol_angle.value, self._pol_degree.value] for ene in self._response.energy_mid])
+
         expectation = []
 
-        for i, interpolator in enumerate(self._all_interp):
+        # create the model counts by summing over energy
 
+        for i, interpolator in enumerate(self._all_interp):
             rate = np.dot(interpolator(eval_points), intergal_spectrum)
 
             expectation.append(rate)
@@ -360,15 +342,21 @@ class PolarLike(PluginPrototype):
 
         background_file.writeto("%s_bak.h5" % file_name)
 
-    def display(self, ax=None, show_data=True, show_model=True, show_total=False ,model_kwargs={}, data_kwargs={}):
+    def display(self, ax=None, show_data=True, show_model=True, show_total=False, model_kwargs={}, data_kwargs={}):
+        """
 
-
-
+        :param ax:
+        :param show_data:
+        :param show_model:
+        :param show_total:
+        :param model_kwargs:
+        :param data_kwargs:
+        :return:
+        """
         if show_total:
             show_model = False
             show_data = False
-            
-        
+
         if ax is None:
 
             fig, ax = plt.subplots()
@@ -377,14 +365,12 @@ class PolarLike(PluginPrototype):
 
             fig = ax.get_figure()
 
-
         if show_total:
 
             total_rate = self._total_counts / self._exposure
             bkg_rate = self._background_counts / self._background_exposure
 
             total_errors = np.sqrt(total_rate)
-
 
             if self._background.is_poisson:
 
@@ -394,32 +380,34 @@ class PolarLike(PluginPrototype):
 
                 bkg_errors = self._background.count_errors
 
-            ax.hlines(total_rate, self._response.scattering_bins_lo, self._response.scattering_bins_hi, color='#7D0505' ,**data_kwargs)
-            ax.vlines(self._response.scattering_bins, total_rate - total_errors, total_rate + total_errors, color='#7D0505', **data_kwargs)
+            ax.hlines(total_rate, self._response.scattering_bins_lo, self._response.scattering_bins_hi, color='#7D0505',
+                      **data_kwargs)
+            ax.vlines(self._response.scattering_bins, total_rate - total_errors, total_rate + total_errors,
+                      color='#7D0505', **data_kwargs)
 
-            ax.hlines(bkg_rate, self._response.scattering_bins_lo, self._response.scattering_bins_hi, color='#0D5BAE' ,**data_kwargs)
-            ax.vlines(self._response.scattering_bins, bkg_rate - bkg_errors, bkg_rate + bkg_errors, color='#0D5BAE', **data_kwargs)
+            ax.hlines(bkg_rate, self._response.scattering_bins_lo, self._response.scattering_bins_hi, color='#0D5BAE',
+                      **data_kwargs)
+            ax.vlines(self._response.scattering_bins, bkg_rate - bkg_errors, bkg_rate + bkg_errors, color='#0D5BAE',
+                      **data_kwargs)
 
-                
-            
         if show_data:
 
             net_rate = (self._total_counts / self._exposure) - self._background_counts / self._background_exposure
 
-            errors = np.sqrt((self._total_counts / self._exposure) + (self._background_counts /
-                                                                      self._background_exposure))
+            if not self._background.is_poisson:
+
+                errors = np.sqrt((self._total_counts / self._exposure) + (self._background_counts /
+                                                                          self._background_exposure))
+
+            else:
+
+                errors = np.sqrt((self._total_counts / self._exposure) + (self._background.count_errors /
+                                                                          self._background_exposure) ** 2)
 
             ax.hlines(net_rate, self._response.scattering_bins_lo, self._response.scattering_bins_hi, **data_kwargs)
             ax.vlines(self._response.scattering_bins, net_rate - errors, net_rate + errors, **data_kwargs)
 
-            # step_plot(ax=ax,
-            #           xbins=np.vstack([self._scattering_bins_lo, self._scattering_bins_hi]).T,
-            #           y=net_rate,
-            #           **data_kwargs
-            # )
-
         if show_model:
-
             step_plot(
                 ax=ax,
                 xbins=np.vstack([self._response.scattering_bins_lo, self._response.scattering_bins_hi]).T,
