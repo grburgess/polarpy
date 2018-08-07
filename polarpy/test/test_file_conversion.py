@@ -27,7 +27,6 @@ def test_data_conversion():
 
     root_file = os.path.join(data_path,'fake_polar_data.root')
     rmf_file = os.path.join(data_path,'rmf.root')
-
     
     outfile = 'testdata.h5'
     
