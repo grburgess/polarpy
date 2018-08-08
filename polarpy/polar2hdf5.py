@@ -65,7 +65,7 @@ if has_root:
 
             bins, _, hist = th2_to_arrays(f.Get(file_string))
 
-            out_matrix = np.zeros((len(energy), len(degree), len(angle), len(hist)))
+            out_matrix = np.zeros((len(energy), len(angle), len(degree), len(hist)))
 
             with h5py.File(hdf5_out_file, 'w', libver='latest') as database:
 
@@ -73,13 +73,13 @@ if has_root:
 
 
 
-                    for j, y in enumerate(degree_str):
+                    for j, y in enumerate(angle_str):
 
 
 
-                        for k, z in enumerate(angle_str):
+                        for k, z in enumerate(degree_str):
 
-                            file_string = 'sim_%s_%s_%s' % (x, y, z)
+                            file_string = 'sim_%s_%s_%s' % (x, z, y)
 
                             _ , _, hist = th2_to_arrays(f.Get(file_string))
 
