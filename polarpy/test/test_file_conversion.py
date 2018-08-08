@@ -35,5 +35,5 @@ def test_data_conversion():
 
     # now make sure the polar response works
 
-    pd = POLARData(polar_hdf5_file=outfile, polar_hdf5_response=prsp, reference_time=0.)
+    pd = POLARData(polar_hdf5_file=outfile, polar_hdf5_response=prsp_file, reference_time=0.)
 
