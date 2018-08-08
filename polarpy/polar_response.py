@@ -12,16 +12,16 @@ class PolarResponse(object):
 
         self._interpolate_rsp()
 
-    def _get_hist(self, ene,degree,angle):
+    # def _get_hist(self, ene,degree,angle):
 
 
-        with h5py.File(self._rsp_file,'r') as f:
+    #     with h5py.File(self._rsp_file,'r') as f:
 
-            tmp =  np.array(f['ene_%d'% int(ene)]['deg_%d'% int(degree)]['ang_%d'% int(angle)].value)
 
-           # bins = np.array(f['bins'].value)
 
-        return  tmp
+    #        # bins = np.array(f['bins'].value)
+
+    #     return  tmp
 
 
     def _interpolate_rsp(self):
@@ -39,10 +39,10 @@ class PolarResponse(object):
         
         with h5py.File(self._rsp_file,'r') as f:
         
-            ene = [int(str(x[4:])) for x in f.keys() if 'ene'  in x]
+
             
             
-            energy = np.sort(np.array(ene))
+            energy = f['energy'].value
             
             ene_lo, ene_hi = [],[]
 
@@ -58,8 +58,6 @@ class PolarResponse(object):
         
         
             bins = np.array(f['bins'].value)
-            
-            bins +=12
 
             
             bin_center = 0.5 *(bins[:-1] + bins[1:])
@@ -70,27 +68,8 @@ class PolarResponse(object):
 
             for i, bm in enumerate(bin_center):
 
-                data = []
-                #energy = get_energy()
 
-                for ene in energy:
-
-                    for ang in pol_ang:
-
-                        for deg in pol_deg:
-
-                            hist = self._get_hist(ene,deg,ang)
-
-
-                            data.append(hist[i])
-                data = np.array(data).reshape((energy.shape[0],
-                                               pol_ang.shape[0],
-                                               pol_deg.shape[0]))
-
-
-
-
-                this_interpolator = interpolate.RegularGridInterpolator((energy,pol_ang,pol_deg), data)
+                this_interpolator = interpolate.RegularGridInterpolator((energy,pol_ang,pol_deg), f['matrix'][...,i])
 
 
                 all_interp.append(this_interpolator)
