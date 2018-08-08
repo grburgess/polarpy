@@ -27,6 +27,11 @@ if has_root:
         degree = []
         angle = []
 
+        energy_str = []
+        degree_str = []
+        angle_str = []
+
+        
         with open_ROOT_file(polarization_root_file) as f:
 
             tmp = [key.GetName() for key in f.GetListOfKeys()]
@@ -38,15 +43,25 @@ if has_root:
                 degree.append(float(y))
                 angle.append(float(z))
 
+                energy_str.append(x)
+                degree_str.append(y)
+                angle_str.append(z)
+
+
+                
 
             energy = np.array(np.unique(energy))
             degree = np.array(np.unique(degree))
             angle  = np.array(np.unique(angle))
 
+            energy_str = np.array(np.unique(energy_str))
+            degree_str = np.array(np.unique(degree_str))
+            angle_str  = np.array(np.unique(angle_str))
+
             # just to get the bins
             # must change this from ints later
 
-            file_string = 'sim_%d_%d_%d' % (energy[1], degree[1], angle[1])
+            file_string = 'sim_%d_%d_%d' % (energy_str[1], degree_str[1], angle_str[1])
 
             bins, _, hist = th2_to_arrays(f.Get(file_string))
 
@@ -54,17 +69,17 @@ if has_root:
 
             with h5py.File(hdf5_out_file, 'w', libver='latest') as database:
 
-                for i,x in enumerate(energy):
+                for i,x in enumerate(energy_str):
 
 
 
-                    for j, y in enumerate(degree):
+                    for j, y in enumerate(degree_str):
 
 
 
-                        for k, z in enumerate(angle):
+                        for k, z in enumerate(angle_str):
 
-                            file_string = 'sim_%d_%d_%d' % (x, y, z)
+                            file_string = 'sim_%s_%s_%s' % (x, y, z)
 
                             _ , _, hist = th2_to_arrays(f.Get(file_string))
 
