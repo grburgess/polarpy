@@ -39,10 +39,10 @@ class PolarResponse(object):
         
         with h5py.File(self._rsp_file,'r') as f:
         
-            ene = [int(str(x[4:])) for x in f.keys() if 'ene'  in x]
+
             
             
-            energy = np.sort(np.array(ene))
+            energy = f['energy'].value
             
             ene_lo, ene_hi = [],[]
 
@@ -68,29 +68,8 @@ class PolarResponse(object):
 
             for i, bm in enumerate(bin_center):
 
-                data = []
-                #energy = get_energy()
 
-                for ene in energy:
-
-                    for ang in pol_ang:
-
-                        for deg in pol_deg:
-
-                            tmp = np.array(f['ene_%d' % int(ene)]['deg_%d' % int(deg)]['ang_%d' % int(ang)].value)
-
-                            hist = self._get_hist(ene,deg,ang)
-
-
-                            data.append(hist[i])
-                data = np.array(data).reshape((energy.shape[0],
-                                               pol_ang.shape[0],
-                                               pol_deg.shape[0]))
-
-
-
-
-                this_interpolator = interpolate.RegularGridInterpolator((energy,pol_ang,pol_deg), data)
+                this_interpolator = interpolate.RegularGridInterpolator((energy,pol_ang,pol_deg), f['matrix'][...,i])
 
 
                 all_interp.append(this_interpolator)
