@@ -3,25 +3,47 @@ import numpy as np
 
 from threeML.utils.polarization.binned_polarization import BinnedModulationCurve
 
+
 class ModulationCurveFile(object):
 
-    def __init__(self, counts, scattering_bins, exposures, count_errors=None, sys_errors=None,  scale_factor=1.,mission=None, instrument=None, tstart=None, tstop=None):
+    def __init__(self, counts, scattering_bins, exposures, count_errors=None, sys_errors=None, scale_factor=1.,
+                 mission=None, instrument=None, tstart=None, tstop=None):
+        """
+
+        A int for modulation curve to facilitate  the reading and writing of files
+
+        :param counts: a matrix of counts where the rows are time intervals and the columns are scattering bins
+        :param scattering_bins: and array of scattering bin edges
+        :param exposures: and array of exposures for each time bin
+        :param count_errors: a matrix of counts where the rows are time intervals and the columns are scattering bins
+        :param sys_errors: a matrix of counts where the rows are time intervals and the columns are scattering bins
+        :param scale_factor: the scale factor of the background
+        :param mission: the space mission
+        :param instrument: the instrument on the mission
+        :param tstart: an array of start times for the intervals
+        :param tstop: an array of stop times for the intervals
+        """
+
+
+        # make sure that all the arrays are the correct shape
 
         counts = np.atleast_2d(counts)
         exposures = np.atleast_1d(exposures)
 
-        assert len(exposures.shape) == 1 
+        assert len(exposures.shape) == 1
 
         assert len(counts.shape) == 2
+
+        # extract the shape so we know the interval size
+        # as well as the number of bins
 
         n_intervals, n_bins = counts.shape
 
         assert len(exposures) == n_intervals
-        
-        assert len(scattering_bins) == n_bins + 1, 'The shape of the counts is incorrect' 
+
+        assert len(scattering_bins) == n_bins + 1, 'The shape of the counts is incorrect'
 
         assert np.all(exposures >= 0.), 'exposures are not positive'
-
 
         if count_errors is not None:
 
@@ -33,32 +55,28 @@ class ModulationCurveFile(object):
         else:
 
             self._is_poisson = True
-            
+
         self._count_errors = count_errors
-        
-        if tstart is not None:
 
-            tstart = np.atleast_1d(tstart)
-            assert len(tstart.shape) == 1
-            assert len(tstart) == n_intervals
+        # correct start and stops
+        tmp = [tstart,tstop]
 
-        if tstop is not None:
+        for i,_ in enumerate(tmp):
 
-            tstop = np.atleast_1d(tstop)
-            assert len(tstop.shape) == 1
-            assert len(tstop) == n_intervals
- 
-            
+            if tmp[i] is not None:
+                tmp[i] = np.atleast_1d(tmp[i])
+                assert len(tmp[i].shape) == 1
+                assert len(tmp[i]) == n_intervals
 
         ## fix this later
         self._sys_errors = sys_errors
-        
+
         if instrument is None:
             instrument = 'Unknown'
 
         if mission is None:
             mission = 'Unknown'
-        
+
         self._counts = counts
         self._scattering_bins = scattering_bins
         self._exposures = exposures
@@ -68,7 +86,7 @@ class ModulationCurveFile(object):
         self._tstop = tstop
         self._instrument = instrument
         self._mission = mission
-        
+
     @classmethod
     def read(cls, file_name):
 
@@ -80,7 +98,6 @@ class ModulationCurveFile(object):
             mission = f.attrs['mission']
             instrument = f.attrs['instrument']
             scale_factor = f.attrs['scale_factor']
-            
 
             counts = []
             exposures = []
@@ -96,8 +113,8 @@ class ModulationCurveFile(object):
             tstart_flag = True
             tstop_flag = True
             tstart = []
-            tstop =[]
-                
+            tstop = []
+
             for interval in range(n_intervals):
                 int_grp = f['interval_%d' % interval]
 
@@ -105,7 +122,6 @@ class ModulationCurveFile(object):
                 exposures.append(int_grp.attrs['exposure'])
 
                 if not is_poisson:
-
                     count_errors.append(int_grp['count_errors'].value)
 
                 if tstart_flag:
@@ -128,10 +144,6 @@ class ModulationCurveFile(object):
                         tstop = None
                         tstop_flag = False
 
-
-
-
-                
         return cls(counts=counts,
                    exposures=exposures,
                    scattering_bins=scattering_bins,
@@ -142,7 +154,6 @@ class ModulationCurveFile(object):
                    instrument=instrument,
                    tstart=tstart,
                    tstop=tstop)
-            
 
     def writeto(self, file_name):
 
@@ -152,30 +163,25 @@ class ModulationCurveFile(object):
 
                 int_grp = f.create_group('interval_%d' % interval)
 
-            
-                int_grp.create_dataset('counts',data = self._counts[interval], compression='lzf' )
-                int_grp.attrs['exposure']=self._exposures[interval]
+                int_grp.create_dataset('counts', data=self._counts[interval], compression='lzf')
+                int_grp.attrs['exposure'] = self._exposures[interval]
 
-                
                 if self._count_errors is not None:
-                    int_grp.create_dataset('count_errors',data = self._count_errors[interval], compression='lzf' )
+                    int_grp.create_dataset('count_errors', data=self._count_errors[interval], compression='lzf')
 
                 if self._tstart is not None:
                     int_grp.attrs['tstart'] = self._tstart[interval]
 
                 if self._tstop is not None:
                     int_grp.attrs['tstop'] = self._tstop[interval]
- 
-                
 
-                
-            f.create_dataset('scattering_bins',data = self._scattering_bins, compression='lzf')
+            f.create_dataset('scattering_bins', data=self._scattering_bins, compression='lzf')
             f.attrs['n_intervals'] = self._n_intervals
             f.attrs['is_poisson'] = self._is_poisson
             f.attrs['instrument'] = self._instrument
             f.attrs['mission'] = self._mission
             f.attrs['scale_factor'] = self._scale_factor
-            
+
     def to_binned_modulation_curve(self, interval=0):
 
         count_errors = None
@@ -186,17 +192,17 @@ class ModulationCurveFile(object):
         if self._sys_errors is not None:
             sys_errors = self._sys_errors[interval]
 
-        
         return BinnedModulationCurve(counts=self._counts[interval],
                                      exposure=self._exposures[interval],
                                      abounds=self._scattering_bins,
-                                     count_errors = count_errors,
-                                     sys_errors = sys_errors,
-                                     scale_factor = self._scale_factor,
+                                     count_errors=count_errors,
+                                     sys_errors=sys_errors,
+                                     scale_factor=self._scale_factor,
                                      is_poisson=self._is_poisson,
-                                     instrument = self._instrument,
-                                     tstart = self._tstart,
-                                     tstop = self._tstop)
+                                     instrument=self._instrument,
+                                     tstart=self._tstart,
+                                     tstop=self._tstop)
+
     @classmethod
     def from_binned_modulation_curve(cls, binned_mod_curve):
         """
@@ -216,16 +222,6 @@ class ModulationCurveFile(object):
                    tstart=binned_mod_curve.tstart,
                    tstop=binned_mod_curve.tstop)
 
-
-        
-        return cls(counts=binned_mod_curve.counts,
-                   exposure=binned_mod_curve.exposure
-
-
-        )
-
-    
-            
     @property
     def counts(self):
         return self._counts
