@@ -394,7 +394,7 @@ class PolarLike(PluginPrototype):
 
             net_rate = (self._total_counts / self._exposure) - self._background_counts / self._background_exposure
 
-            if not self._background.is_poisson:
+            if self._background.is_poisson:
 
                 errors = np.sqrt((self._total_counts / self._exposure) + (self._background_counts /
                                                                           self._background_exposure))
