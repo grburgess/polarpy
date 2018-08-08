@@ -12,16 +12,16 @@ class PolarResponse(object):
 
         self._interpolate_rsp()
 
-    def _get_hist(self, ene,degree,angle):
+    # def _get_hist(self, ene,degree,angle):
 
 
-        with h5py.File(self._rsp_file,'r') as f:
+    #     with h5py.File(self._rsp_file,'r') as f:
 
 
 
-           # bins = np.array(f['bins'].value)
+    #        # bins = np.array(f['bins'].value)
 
-        return  tmp
+    #     return  tmp
 
 
     def _interpolate_rsp(self):
