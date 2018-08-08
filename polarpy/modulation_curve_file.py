@@ -183,6 +183,17 @@ class ModulationCurveFile(object):
             f.attrs['scale_factor'] = self._scale_factor
 
     def to_binned_modulation_curve(self, interval=0):
+        """
+
+        Create a 3ML BinnedModulationCurve from the contents of the interface.
+        An interval with c-style indexing must be specified.
+
+        :param interval: The interval to extract. Starting at zero
+        :return: A 3ML BinnedModulationCurve
+        """
+
+        # this keeps us from trying to call create things
+        # not stored
 
         count_errors = None
         sys_errors = None
@@ -209,6 +220,8 @@ class ModulationCurveFile(object):
         Create a modulation curve file from a binned modulation curve
         instance. This is really a simple pass thru for writing to
         disk
+        :param binned_mod_curve: a 3ML BinnedModulationCurve
+        :return: a modulation curve fit file memory instance
 
         """
         return cls(counts=binned_mod_curve.counts,
