@@ -17,7 +17,7 @@ class PolarResponse(object):
 
         with h5py.File(self._rsp_file,'r') as f:
 
-            tmp =  np.array(f['ene_%d'% int(ene)]['deg_%d'% int(degree)]['ang_%d'% int(angle)].value)
+
 
            # bins = np.array(f['bins'].value)
 
@@ -58,8 +58,6 @@ class PolarResponse(object):
         
         
             bins = np.array(f['bins'].value)
-            
-            bins +=12
 
             
             bin_center = 0.5 *(bins[:-1] + bins[1:])
@@ -78,6 +76,8 @@ class PolarResponse(object):
                     for ang in pol_ang:
 
                         for deg in pol_deg:
+
+                            tmp = np.array(f['ene_%d' % int(ene)]['deg_%d' % int(deg)]['ang_%d' % int(ang)].value)
 
                             hist = self._get_hist(ene,deg,ang)
 

@@ -34,29 +34,49 @@ if has_root:
             for tmp2 in tmp:
                 _, x, y, z = tmp2.split('_')
 
-                energy.append(x)
-                degree.append(y)
-                angle.append(z)
+                energy.append(float(x))
+                degree.append(float(y))
+                angle.append(float(z))
+
+
+            energy = np.array(np.unique(energy))
+            degree = np.array(np.unique(degree))
+            angle  = np.array(np.unique(angle))
+
+            # just to get the bins
+            # must change this from ints later
+
+            file_string = 'sim_%d_%d_%d' % (energy[0], degree[0], angle[0])
+
+            bins, _, hist = th2_to_arrays(f.Get(file_string))
+
+            out_matrix = np.zeros((len(energy), len(degree), len(angle), len(hist)))
+
+
 
             with h5py.File(hdf5_out_file, 'w', libver='latest') as database:
 
-                for x in np.unique(energy):
-
-                    ene_grp = database.create_group('ene_%d' % int(x))
-
-                    for y in np.unique(degree):
-
-                        degree_grp = ene_grp.create_group('deg_%d' % int(y))
-
-                        for z in np.unique(angle):
-                            file_string = 'sim_%s_%s_%s' % (x, y, z)
+                for i,x in enumerate(energy):
 
 
-                            bins, _, hist = th2_to_arrays(f.Get(file_string))
 
-                            degree_grp.create_dataset('ang_%d' % int(z), data=hist, compression='lzf')
+                    for j, y in enumerate(degree):
 
-                            
+
+
+                        for k, z in enumerate(angle):
+                            file_string = 'sim_%d_%d_%d' % (x, y, z)
+
+
+                            _ , _, hist = th2_to_arrays(f.Get(file_string))
+
+                            out_matrix[i,j,k,:] = hist
+
+
+
+                database.create_dataset('matrix',data=out_matrix,compression='lzf')
+
+
                 if np.min(bins) < 0:
                     # we will try to automatically correct for the badly specified bins
                     bins = np.array(bins)
@@ -69,9 +89,9 @@ if has_root:
                     
                 
                 database.create_dataset('bins', data=bins, compression='lzf')
-                database.create_dataset('pol_ang', data=np.array([int(n) for n in np.unique(angle)]), compression='lzf')
-                database.create_dataset('pol_deg', data=np.array([int(n) for n in np.unique(degree)]), compression='lzf')
-
+                database.create_dataset('pol_ang', data=angle, compression='lzf')
+                database.create_dataset('pol_deg', data=degree, compression='lzf')
+                database.create_dataset('energy',data=energy,compression='lzf')
 
     def polar_spectra_to_hdf5(polar_root_file, polar_rsp_root_file, hdf5_out_file):
         """
