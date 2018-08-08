@@ -61,7 +61,7 @@ if has_root:
             # just to get the bins
             # must change this from ints later
 
-            file_string = 'sim_%d_%d_%d' % (energy_str[1], degree_str[1], angle_str[1])
+            file_string = 'sim_%s_%s_%s' % (energy_str[1], degree_str[1], angle_str[1])
 
             bins, _, hist = th2_to_arrays(f.Get(file_string))
 
