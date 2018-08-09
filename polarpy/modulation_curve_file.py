@@ -2,7 +2,7 @@ import h5py
 import numpy as np
 
 from threeML.utils.polarization.binned_polarization import BinnedModulationCurve
-
+#from polarpy.polarlike import PolarLike
 
 class ModulationCurveFile(object):
 
@@ -235,6 +235,62 @@ class ModulationCurveFile(object):
                    tstart=binned_mod_curve.tstart,
                    tstop=binned_mod_curve.tstop)
 
+    @classmethod
+    def from_list_of_plugins(cls, plugins, kind='total'):
+
+        assert (kind=='total') or (kind=='background'), 'invalid kind. Must be totla or background'
+
+        out= dict(tstart = [],
+                  tstop  = [],
+                  counts = [],
+                  count_errors =[],
+                  sys_errors = [],
+                  exposures = [],
+        )
+        for plugin in plugins:
+
+#            assert isinstance(plugin, PolarLike), 'must be a PolarLike plugin'
+
+            if kind=='total':
+
+                bmc = plugin.observation
+
+            elif kind =='background':
+
+                bmc = plugin.background
+
+            
+            
+            out['tstart'].append(bmc.tstart)
+            out['tstop'].append(bmc.tstop)
+            out['counts'].append(bmc.counts)
+            out['count_errors'].append(bmc.count_errors)
+            out['sys_errors'].append(bmc.sys_errors)
+            out['exposures'].append(bmc.exposure)
+
+        
+            
+        for k, v in out.items():
+
+            if np.all(np.array(v) == None):
+                out[k] = None
+                
+
+            
+        return cls(counts=out['counts'],
+                   exposures=out['exposures'],
+                   scattering_bins=bmc.edges,
+                   count_errors=out['count_errors'],
+                   sys_errors=out['sys_errors'],
+                   scale_factor=bmc.scale_factor,
+                   mission=bmc.mission,
+                   instrument=bmc.instrument,
+                   tstart=out['tstart'],
+                   tstop=out['tstop']
+        )
+
+        
+    
     @property
     def counts(self):
         return self._counts
@@ -246,3 +302,6 @@ class ModulationCurveFile(object):
     @property
     def exposures(self):
         return self._exposures
+
+
+    
