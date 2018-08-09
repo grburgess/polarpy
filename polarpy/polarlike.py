@@ -200,37 +200,55 @@ class PolarLike(PluginPrototype):
 
         # Get the source model for all channels (that's why we don't use the .folded_model property)
 
-        source_model_counts = self._get_model_counts()
+        
+        # We remove the mask temporarily because we need the various elements for all channels. We will restore it
+        # at the end
 
-        if self._background.is_poisson:
-            _, background_model_counts = poisson_observed_poisson_background(
-                        self._observed_counts, self._background_counts, self._scale, source_model_counts)
-        else:
+        original_rebinner = self._rebinner
 
-            _, background_model_counts = poisson_observed_gaussian_background(
-                        self._observed_counts, self._background_counts, self._background.count_errors, source_model_counts)
+        with self._without_rebinner():
 
-        # Now randomize the expectations
+            # Get the source model for all channels (that's why we don't use the .folded_model property)
 
-        # Randomize expectations for the source
+        
+            source_model_counts = self._get_model_counts()
 
-        randomized_source_counts = np.random.poisson(source_model_counts + background_model_counts)
+            if self._background.is_poisson:
+                _, background_model_counts = poisson_observed_poisson_background(
+                            self._current_observed_counts, self._current_background_counts, self._scale, source_model_counts)
+            else:
 
-        randomized_background_counts = np.random.poisson(background_model_counts)
+                _, background_model_counts = poisson_observed_gaussian_background(
+                            self._current_observed_counts, self._current_background_counts, self._current_background_count_errors, source_model_counts)
 
-        new_observation = self._observation.clone(new_counts=randomized_source_counts)
+            # Now randomize the expectations
 
-        new_background = self._background.clone(new_counts=randomized_background_counts)
+            # Randomize expectations for the source
 
-        new_plugin = PolarLike(
-            name=new_name,
-            observation=new_observation,
-            background=new_background,
-            response=self._response,
-            verbose=False,
-        )
+            randomized_source_counts = np.random.poisson(source_model_counts + background_model_counts)
 
-        return new_plugin
+            randomized_background_counts = np.random.poisson(background_model_counts)
+
+            new_observation = self._observation.clone(new_counts=randomized_source_counts)
+
+            new_background = self._background.clone(new_counts=randomized_background_counts)
+
+            new_plugin = PolarLike(
+                name=new_name,
+                observation=new_observation,
+                background=new_background,
+                response=self._response,
+                verbose=False,
+            )
+
+            # Apply the same selections as the current data set
+            if original_rebinner is not None:
+
+                # Apply rebinning, which also applies the mask
+                new_plugin._apply_rebinner(original_rebinner)
+
+            
+            return new_plugin
 
     def set_model(self, likelihood_model_instance):
         """
