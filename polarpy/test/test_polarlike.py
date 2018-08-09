@@ -91,6 +91,48 @@ def test_setting_model():
     polarlike.display(show_total=True)
 
 
+
+def test_rebin():
+
+    obs = os.path.join(data_path, 'test_mcf.h5')
+    bak = os.path.join(data_path, 'test_mcf.h5')
+
+    polarlike = PolarLike('test', observation=obs, background=bak, response=prsp, interval_number=1)
+
+    pl = Powerlaw()
+    pz = LinearPolarization(10, 10)
+
+    sc = SpectralComponent('pl',pl, pz)
+
+    ps = PointSource('test', 0, 0, components=[sc])
+    model = Model(ps)
+
+    polarlike.set_model(model)
+
+
+    polarlike.rebin_on_background(5)
+    
+    polarlike.get_log_like()
+
+    polarlike.display()
+
+    polarlike.display(show_total=True)
+
+    polarlike.remove_rebinning()
+
+    polarlike.rebin_on_source(5)
+    
+    polarlike.get_log_like()
+
+    polarlike.display()
+
+    polarlike.display(show_total=True)
+
+    polarlike.remove_rebinning()
+
+
+    
+    
 def test_simulations():
 
     scattering_bins = np.linspace(0,360,31)
