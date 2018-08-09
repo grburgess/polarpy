@@ -513,7 +513,7 @@ class PolarLike(PluginPrototype):
         return self._background
 
     @contextmanager
-    def _without__rebinner(self):
+    def _without_rebinner(self):
 
         # Store rebinner for later use
 
@@ -522,7 +522,7 @@ class PolarLike(PluginPrototype):
         # Clean mask and rebinning
 
         self.remove_rebinning()
-
+        
 
         # Execute whathever
 
@@ -612,3 +612,7 @@ class PolarLike(PluginPrototype):
         """
 
         self._rebinner = None
+
+        self._current_observed_counts = self._observed_counts
+        self._current_background_counts = self._background_counts
+        self._current_background_count_errors = self._background_count_errors
