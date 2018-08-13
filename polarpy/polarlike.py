@@ -483,25 +483,30 @@ class PolarLike(PluginPrototype):
 
         if show_data:
 
-            net_rate = (        self._observed_counts / self._exposure) - self._background_counts / self._background_exposure
+            net_rate = ( self._current_observed_counts / self._exposure) - self._current_background_counts / self._background_exposure
 
             if self._background.is_poisson:
 
-                errors = np.sqrt((        self._observed_counts / self._exposure) +
-                                 (self._background_counts / self._background_exposure))
+                errors = np.sqrt((self._current_observed_counts / self._exposure) +
+                                 (self._current_background_counts / self._background_exposure))
 
             else:
 
-                errors = np.sqrt((        self._observed_counts / self._exposure) +
-                                 (self._background.count_errors / self._background_exposure)**2)
+                errors = np.sqrt((        self._current_observed_counts/ self._exposure) +
+                                 (self._current_background_count_errors / self._background_exposure)**2)
 
-            ax.hlines(net_rate/self.bin_widths, self._response.scattering_bins_lo, self._response.scattering_bins_hi, **data_kwargs)
-            ax.vlines(self._response.scattering_bins, (net_rate - errors)/self.bin_widths, (net_rate + errors)/self.bin_widths, **data_kwargs)
+            ax.hlines(net_rate/self.bin_widths, sa_min, sa_max, **data_kwargs)
+            ax.vlines(np.mean([self.scattering_boundaries], axis=1),
+                      (net_rate - errors)/self.bin_widths, (net_rate + errors)/self.bin_widths,
+                      **data_kwargs)
 
         if show_model:
+
+
+
             step_plot(
                 ax=ax,
-                xbins=np.vstack([self._response.scattering_bins_lo, self._response.scattering_bins_hi]).T,
+                xbins=np.vstack([sa_min, sa_max]).T,
                 y=self._get_model_counts() / self._exposure /self.bin_widths,
                 **model_kwargs)
 
