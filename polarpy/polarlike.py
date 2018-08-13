@@ -344,7 +344,7 @@ class PolarLike(PluginPrototype):
 
         else:
 
-            model_rate, = self._rebinner.rebin(self._get_model_rate)
+            model_rate, = self._rebinner.rebin(self._get_model_rate())
 
         
         return self._nuisance_parameter.value * self._exposure * model_rate
@@ -406,6 +406,12 @@ class PolarLike(PluginPrototype):
  
         return sa_min, sa_max
 
+    @property
+    def bin_widths(self):
+
+        sa_min, sa_max = self.scattering_boundaries
+
+        return sa_max - sa_min
 
         
     def display(self, ax=None, show_data=True, show_model=True, show_total=False, model_kwargs={}, data_kwargs={}):
@@ -436,8 +442,8 @@ class PolarLike(PluginPrototype):
 
         if show_total:
 
-            total_rate =         self._current_observed_counts / self._exposure
-            bkg_rate = self._current_background_counts / self._background_exposure
+            total_rate = self._current_observed_counts / self._exposure / self.bin_widths
+            bkg_rate = self._current_background_counts / self._background_exposure /self.bin_widths
 
             total_errors = np.sqrt(total_rate)
 
@@ -447,7 +453,7 @@ class PolarLike(PluginPrototype):
 
             else:
 
-                bkg_errors = self._current_background_count_errors
+                bkg_errors = self._current_background_count_errors / self.bin_widths
 
             ax.hlines(
                 total_rate,
@@ -489,14 +495,14 @@ class PolarLike(PluginPrototype):
                 errors = np.sqrt((        self._observed_counts / self._exposure) +
                                  (self._background.count_errors / self._background_exposure)**2)
 
-            ax.hlines(net_rate, self._response.scattering_bins_lo, self._response.scattering_bins_hi, **data_kwargs)
-            ax.vlines(self._response.scattering_bins, net_rate - errors, net_rate + errors, **data_kwargs)
+            ax.hlines(net_rate/self.bin_widths, self._response.scattering_bins_lo, self._response.scattering_bins_hi, **data_kwargs)
+            ax.vlines(self._response.scattering_bins, (net_rate - errors)/self.bin_widths, (net_rate + errors)/self.bin_widths, **data_kwargs)
 
         if show_model:
             step_plot(
                 ax=ax,
                 xbins=np.vstack([self._response.scattering_bins_lo, self._response.scattering_bins_hi]).T,
-                y=self._get_model_counts() / self._exposure,
+                y=self._get_model_counts() / self._exposure /self.bin_widths,
                 **model_kwargs)
 
         ax.set_xlabel('Scattering Angle')
