@@ -600,7 +600,7 @@ class PolarLike(PluginPrototype):
 
 
 
-        rebinner = Rebinner(self._observed_counts, min_number_of_counts, self._mask)
+        rebinner = Rebinner(self._observed_counts, min_number_of_counts, mask = None)
 
         self._apply_rebinner(rebinner)
 
