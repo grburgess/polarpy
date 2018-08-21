@@ -414,7 +414,7 @@ class PolarLike(PluginPrototype):
         return sa_max - sa_min
 
         
-    def display(self, ax=None, show_data=True, show_model=True, show_total=False, model_kwargs={}, data_kwargs={}):
+    def display(self, ax=None, show_data=True, show_model=True, show_total=False, model_kwargs={}, data_kwargs={}, edges=True):
         """
 
         :param ax:
@@ -503,13 +503,23 @@ class PolarLike(PluginPrototype):
         if show_model:
 
 
+            if edges:
 
-            step_plot(
-                ax=ax,
-                xbins=np.vstack([sa_min, sa_max]).T,
-                y=self._get_model_counts() / self._exposure /self.bin_widths,
-                **model_kwargs)
+                step_plot(
+                    ax=ax,
+                    xbins=np.vstack([sa_min, sa_max]).T,
+                    y=self._get_model_counts() / self._exposure /self.bin_widths,
+                    **model_kwargs)
 
+            else:
+
+                y=self._get_model_counts() / self._exposure /self.bin_widths
+                ax.hlines(y, sa_min, sa_max, **model_kwargs)
+
+                
+
+                
+                
         ax.set_xlabel('Scattering Angle')
         ax.set_ylabel('Net Rate (cnt/s/bin)')
 
