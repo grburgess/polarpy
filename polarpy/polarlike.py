@@ -226,7 +226,7 @@ class PolarLike(PluginPrototype):
                 idx = (self._background_count_errors > 0)
 
                 randomized_background_counts[idx] = np.random.normal(
-                    loc=background_model_counts[idx], scale=self._spectrum_plugin.background_count_errors[idx])
+                    loc=background_model_counts[idx], scale=self._background_count_errors[idx])
 
                 # Issue a warning if the generated background is less than zero, and fix it by placing it at zero
 
