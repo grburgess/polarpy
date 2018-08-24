@@ -223,6 +223,8 @@ class PolarLike(PluginPrototype):
 
                 randomized_background_counts = np.zeros_like(background_model_counts)
 
+                idx = (self._background_count_errors > 0)
+
                 randomized_background_counts[idx] = np.random.normal(
                     loc=background_model_counts[idx], scale=self._spectrum_plugin.background_count_errors[idx])
 
