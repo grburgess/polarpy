@@ -114,9 +114,9 @@ def test_rebin():
     
     polarlike.get_log_like()
 
-    polarlike.display()
+#    polarlike.display()
 
-    polarlike.display(show_total=True)
+#    polarlike.display(show_total=True)
 
     polarlike.remove_rebinning()
 
@@ -124,9 +124,9 @@ def test_rebin():
     
     polarlike.get_log_like()
 
-    polarlike.display()
+#    polarlike.display()
 
-    polarlike.display(show_total=True)
+#    polarlike.display(show_total=True)
 
     polarlike.remove_rebinning()
 
