@@ -528,10 +528,6 @@ class PolarLike(PluginPrototype):
                 errors = np.sqrt((self._current_observed_counts / self._exposure) +
                                  (self._current_background_count_errors / self._background_exposure)**2)
 
-
-            print(net_rate.shape)
-            print(self.bin_widths.shape)
-            
             
             ax.hlines(net_rate / self.bin_widths, sa_min, sa_max, **data_kwargs)
             ax.vlines(
