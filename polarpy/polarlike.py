@@ -561,150 +561,150 @@ class PolarLike(PluginPrototype):
 
         return fig
 
-    def display_circle(self,
-                       ax=None,
-                       show_data=True,
-                       show_model=True,
-                       show_total=False,
-                       model_kwargs={},
-                       data_kwargs={},
-                       edges=True,
-                       min_rate=None,
-                       projection=None):
-        """
+    # def display_circle(self,
+    #                    ax=None,
+    #                    show_data=True,
+    #                    show_model=True,
+    #                    show_total=False,
+    #                    model_kwargs={},
+    #                    data_kwargs={},
+    #                    edges=True,
+    #                    min_rate=None,
+    #                    projection=None):
+    #     """
 
-        :param ax:
-        :param show_data:
-        :param show_model:
-        :param show_total:
-        :param model_kwargs:
-        :param data_kwargs:
-        :return:
-        """
+    #     :param ax:
+    #     :param show_data:
+    #     :param show_model:
+    #     :param show_total:
+    #     :param model_kwargs:
+    #     :param data_kwargs:
+    #     :return:
+    #     """
 
-        tmp = ((self._observed_counts / self._exposure) - self._background_counts / self._background_exposure)
+    #     tmp = ((self._observed_counts / self._exposure) - self._background_counts / self._background_exposure)
 
-        scattering_edges = np.deg2rad(np.array(self._observation.edges))
+    #     scattering_edges = np.deg2rad(np.array(self._observation.edges))
 
-        sa_min, sa_max = scattering_edges[:-1], scattering_edges[1:]
+    #     sa_min, sa_max = scattering_edges[:-1], scattering_edges[1:]
 
-        tmp_db = ((self._observed_counts / self._exposure) - self._background_counts / self._background_exposure) / (
-            sa_max - sa_min)
+    #     tmp_db = ((self._observed_counts / self._exposure) - self._background_counts / self._background_exposure) / (
+    #         sa_max - sa_min)
 
-        old_rebinner = self._rebinner
+    #     old_rebinner = self._rebinner
 
-        if min_rate is not None:
+    #     if min_rate is not None:
 
-            rebinner = Rebinner(tmp_db, min_rate, mask=None)
+    #         rebinner = Rebinner(tmp_db, min_rate, mask=None)
 
-            self._apply_rebinner(rebinner)
+    #         self._apply_rebinner(rebinner)
 
-            net_rate = rebinner.rebin(tmp)
-        else:
+    #         net_rate = rebinner.rebin(tmp)
+    #     else:
 
-            net_rate = tmp
+    #         net_rate = tmp
 
-        sa_min, sa_max = np.deg2rad(self.scattering_boundaries)
-        xs = np.deg2rad(self.scattering_boundaries)
+    #     sa_min, sa_max = np.deg2rad(self.scattering_boundaries)
+    #     xs = np.deg2rad(self.scattering_boundaries)
 
-        if show_total:
-            show_model = False
-            show_data = False
+    #     if show_total:
+    #         show_model = False
+    #         show_data = False
 
-        if ax is None:
+    #     if ax is None:
 
-            fig, ax = plt.subplots(subplot_kw=dict(projection=projection))
+    #         fig, ax = plt.subplots(subplot_kw=dict(projection=projection))
 
-        else:
+    #     else:
 
-            fig = ax.get_figure()
+    #         fig = ax.get_figure()
 
-        if show_total:
-            pass
+    #     if show_total:
+    #         pass
 
-            # total_rate = self._current_observed_counts / self._exposure / self.bin_widths
-            # bkg_rate = self._current_background_counts / self._background_exposure /self.bin_widths
+    #         # total_rate = self._current_observed_counts / self._exposure / self.bin_widths
+    #         # bkg_rate = self._current_background_counts / self._background_exposure /self.bin_widths
 
-            # total_errors = np.sqrt(total_rate)
+    #         # total_errors = np.sqrt(total_rate)
 
-            # if self._background.is_poisson:
+    #         # if self._background.is_poisson:
 
-            #     bkg_errors = np.sqrt(bkg_rate)
+    #         #     bkg_errors = np.sqrt(bkg_rate)
 
-            # else:
+    #         # else:
 
-            #     bkg_errors = self._current_background_count_errors / self.bin_widths
+    #         #     bkg_errors = self._current_background_count_errors / self.bin_widths
 
-            # xs = self.scattering_boundaries
+    #         # xs = self.scattering_boundaries
 
-            # xs = np.deg2rad(xs)
-            # sa_min = np.deg2rad(sa_min)
-            # sa_max = np.deg2rad(sa_max)
+    #         # xs = np.deg2rad(xs)
+    #         # sa_min = np.deg2rad(sa_min)
+    #         # sa_max = np.deg2rad(sa_max)
 
-            # ax.hlines(
-            #     total_rate,
-            #     sa_min,
-            #     sa_max,
-            #     color='#7D0505',
-            #     **data_kwargs)
-            # ax.vlines(
-            #     np.mean([xs],axis=1),
-            #     total_rate - total_errors,
-            #     total_rate + total_errors,
-            #     color='#7D0505',
-            #     **data_kwargs)
+    #         # ax.hlines(
+    #         #     total_rate,
+    #         #     sa_min,
+    #         #     sa_max,
+    #         #     color='#7D0505',
+    #         #     **data_kwargs)
+    #         # ax.vlines(
+    #         #     np.mean([xs],axis=1),
+    #         #     total_rate - total_errors,
+    #         #     total_rate + total_errors,
+    #         #     color='#7D0505',
+    #         #     **data_kwargs)
 
-            # ax.hlines(
-            #     bkg_rate,
-            #     sa_min,
-            #     sa_max,
-            #     color='#0D5BAE',
-            #     **data_kwargs)
-            # ax.vlines(
-            #     np.mean([xs],axis=1),
-            #     bkg_rate - bkg_errors,
-            #     bkg_rate + bkg_errors,
-            #     color='#0D5BAE',
-            #     **data_kwargs)
+    #         # ax.hlines(
+    #         #     bkg_rate,
+    #         #     sa_min,
+    #         #     sa_max,
+    #         #     color='#0D5BAE',
+    #         #     **data_kwargs)
+    #         # ax.vlines(
+    #         #     np.mean([xs],axis=1),
+    #         #     bkg_rate - bkg_errors,
+    #         #     bkg_rate + bkg_errors,
+    #         #     color='#0D5BAE',
+    #         #     **data_kwargs)
 
-        if show_data:
+    #     if show_data:
 
-            if self._background.is_poisson:
+    #         if self._background.is_poisson:
 
-                errors = np.sqrt((self._current_observed_counts / self._exposure) +
-                                 (self._current_background_counts / self._background_exposure))
+    #             errors = np.sqrt((self._current_observed_counts / self._exposure) +
+    #                              (self._current_background_counts / self._background_exposure))
 
-            else:
+    #         else:
 
-                errors = np.sqrt((self._current_observed_counts / self._exposure) +
-                                 (self._current_background_count_errors / self._background_exposure)**2)
+    #             errors = np.sqrt((self._current_observed_counts / self._exposure) +
+    #                              (self._current_background_count_errors / self._background_exposure)**2)
 
-            ax.hlines(net_rate / self.bin_widths, sa_min, sa_max, **data_kwargs)
-            ax.vlines(
-                np.mean(xs, axis=1), (net_rate - errors) / self.bin_widths, (net_rate + errors) / self.bin_widths,
-                **data_kwargs)
+    #         ax.hlines(net_rate / self.bin_widths, sa_min, sa_max, **data_kwargs)
+    #         ax.vlines(
+    #             np.mean(xs, axis=1), (net_rate - errors) / self.bin_widths, (net_rate + errors) / self.bin_widths,
+    #             **data_kwargs)
 
-        if show_model:
+    #     if show_model:
 
-            y = self._get_model_counts() / self._exposure / self.bin_widths
-            width = sa_max - sa_min
+    #         y = self._get_model_counts() / self._exposure / self.bin_widths
+    #         width = sa_max - sa_min
 
-            ax.bar(np.mean(xs, axis=0), y, width=sa_max - sa_min, bottom=y, **model_kwargs)
+    #         ax.bar(np.mean(xs, axis=0), y, width=sa_max - sa_min, bottom=y, **model_kwargs)
 
-        #ax.set_xlabel('Scattering Angle')
-        #ax.set_ylabel('Net Rate (cnt/s/bin)')
+    #     #ax.set_xlabel('Scattering Angle')
+    #     #ax.set_ylabel('Net Rate (cnt/s/bin)')
 
-        if old_rebinner is not None:
+    #     if old_rebinner is not None:
 
-            # There was a rebinner, use it. Note that the rebinner applies the mask by itself
+    #         # There was a rebinner, use it. Note that the rebinner applies the mask by itself
 
-            self._apply_rebinner(old_rebinner)
+    #         self._apply_rebinner(old_rebinner)
 
-        else:
+    #     else:
 
-            self.remove_rebinning()
+    #         self.remove_rebinning()
 
-        return fig
+    #     return fig
 
     @property
     def observation(self):
