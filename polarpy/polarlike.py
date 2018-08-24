@@ -235,8 +235,8 @@ class PolarLike(PluginPrototype):
                 negative_background_n = np.sum(idx)
 
                 if negative_background_n > 0:
-                    custom_warnings.warn("Generated background has negative counts "
-                                         "in %i channels. Fixing them to zero" % (negative_background_n))
+                    # custom_warnings.warn("Generated background has negative counts "
+                    #                      "in %i channels. Fixing them to zero" % (negative_background_n))
 
                     randomized_background_counts[idx] = 0
 
