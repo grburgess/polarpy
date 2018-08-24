@@ -487,9 +487,11 @@ class PolarLike(PluginPrototype):
             fig = ax.get_figure()
 
         xs = self.scattering_boundaries
+
         if show_total:
 
             total_rate = self._current_observed_counts / self._exposure / self.bin_widths
+
             bkg_rate = self._current_background_counts / self._background_exposure / self.bin_widths
 
             total_errors = np.sqrt(total_rate)
@@ -526,6 +528,11 @@ class PolarLike(PluginPrototype):
                 errors = np.sqrt((self._current_observed_counts / self._exposure) +
                                  (self._current_background_count_errors / self._background_exposure)**2)
 
+
+            print(net_rate.shape)
+            print(self.bin_widths.shape)
+            
+            
             ax.hlines(net_rate / self.bin_widths, sa_min, sa_max, **data_kwargs)
             ax.vlines(
                 np.mean([xs], axis=1), (net_rate - errors) / self.bin_widths, (net_rate + errors) / self.bin_widths,
