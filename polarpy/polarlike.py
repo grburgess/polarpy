@@ -73,7 +73,7 @@ class PolarLike(PluginPrototype):
 
         self._likelihood_model = None
         self._rebinner = None
-        
+
         # now do some double checks
 
         assert len(self._observed_counts) == len(self._background_counts)
@@ -98,7 +98,6 @@ class PolarLike(PluginPrototype):
 
         super(PolarLike, self).__init__(name, nuisance_parameters)
 
-
         # The following vectors are the ones that will be really used for the computation. At the beginning they just
         # point to the original ones, but if a rebinner is used and/or a mask is created through set_active_measurements,
         # they will contain the rebinned and/or masked versions
@@ -106,7 +105,6 @@ class PolarLike(PluginPrototype):
         self._current_observed_counts = self._observed_counts
         self._current_background_counts = self._background_counts
         self._current_background_count_errors = self._background_count_errors
-
 
         self._verbose = verbose
 
@@ -200,7 +198,6 @@ class PolarLike(PluginPrototype):
 
         # Get the source model for all channels (that's why we don't use the .folded_model property)
 
-        
         # We remove the mask temporarily because we need the various elements for all channels. We will restore it
         # at the end
 
@@ -210,36 +207,36 @@ class PolarLike(PluginPrototype):
 
             # Get the source model for all channels (that's why we don't use the .folded_model property)
 
-        
             source_model_counts = self._get_model_counts()
 
             if self._background.is_poisson:
                 _, background_model_counts = poisson_observed_poisson_background(
-                            self._current_observed_counts, self._current_background_counts, self._scale, source_model_counts)
+                    self._current_observed_counts, self._current_background_counts, self._scale, source_model_counts)
                 randomized_background_counts = np.random.poisson(background_model_counts)
 
                 background_count_errors = None
             else:
 
                 _, background_model_counts = poisson_observed_gaussian_background(
-                            self._current_observed_counts, self._current_background_counts, self._current_background_count_errors, source_model_counts)
+                    self._current_observed_counts, self._current_background_counts,
+                    self._current_background_count_errors, source_model_counts)
 
-                 randomized_background_counts = np.zeros_like(background_model_counts)
+                randomized_background_counts = np.zeros_like(background_model_counts)
 
-                 randomized_background_counts[idx] = np.random.normal(loc=background_model_counts[idx],
-                                                             scale=self._spectrum_plugin.background_count_errors[idx])
+                randomized_background_counts[idx] = np.random.normal(
+                    loc=background_model_counts[idx], scale=self._spectrum_plugin.background_count_errors[idx])
 
-                 # Issue a warning if the generated background is less than zero, and fix it by placing it at zero
+                # Issue a warning if the generated background is less than zero, and fix it by placing it at zero
 
-                 idx = (randomized_background_counts < 0)  # type: np.ndarray
+                idx = (randomized_background_counts < 0)    # type: np.ndarray
 
-                 negative_background_n = np.sum(idx)
+                negative_background_n = np.sum(idx)
 
-                 if negative_background_n > 0:
-                     custom_warnings.warn("Generated background has negative counts "
-                                          "in %i channels. Fixing them to zero" % (negative_background_n))
+                if negative_background_n > 0:
+                    custom_warnings.warn("Generated background has negative counts "
+                                         "in %i channels. Fixing them to zero" % (negative_background_n))
 
-                     randomized_background_counts[idx] = 0
+                    randomized_background_counts[idx] = 0
 
                 background_count_errors = self._background_count_errors
 
@@ -253,8 +250,8 @@ class PolarLike(PluginPrototype):
 
             new_observation = self._observation.clone(new_counts=randomized_source_counts)
 
-            new_background = self._background.clone(new_counts=randomized_background_counts,
-                                                    new_count_errors=background_count_errors)
+            new_background = self._background.clone(
+                new_counts=randomized_background_counts, new_count_errors=background_count_errors)
 
             new_plugin = PolarLike(
                 name=new_name,
@@ -270,7 +267,6 @@ class PolarLike(PluginPrototype):
                 # Apply rebinning, which also applies the mask
                 new_plugin._apply_rebinner(original_rebinner)
 
-            
             return new_plugin
 
     def set_model(self, likelihood_model_instance):
@@ -361,7 +357,6 @@ class PolarLike(PluginPrototype):
 
     def _get_model_counts(self):
 
-
         if self._rebinner is None:
             model_rate = self._get_model_rate()
 
@@ -369,7 +364,6 @@ class PolarLike(PluginPrototype):
 
             model_rate, = self._rebinner.rebin(self._get_model_rate())
 
-        
         return self._nuisance_parameter.value * self._exposure * model_rate
 
     def get_log_like(self):
@@ -378,13 +372,14 @@ class PolarLike(PluginPrototype):
 
         if self._background.is_poisson:
 
-            loglike, bkg_model = poisson_observed_poisson_background(        self._current_observed_counts, self._current_background_counts,
-                                                                     self._scale, model_counts)
+            loglike, bkg_model = poisson_observed_poisson_background(
+                self._current_observed_counts, self._current_background_counts, self._scale, model_counts)
 
         else:
 
-            loglike, bkg_model = poisson_observed_gaussian_background(        self._current_observed_counts, self._current_background_counts,
-                                                                      self._current_background_count_errors, model_counts)
+            loglike, bkg_model = poisson_observed_gaussian_background(
+                self._current_observed_counts, self._current_background_counts, self._current_background_count_errors,
+                model_counts)
 
         return np.sum(loglike)
 
@@ -407,8 +402,6 @@ class PolarLike(PluginPrototype):
 
         background_file.writeto("%s_bak.h5" % file_name)
 
-
-
     @property
     def scattering_boundaries(self):
         """
@@ -426,7 +419,6 @@ class PolarLike(PluginPrototype):
 
             sa_min, sa_max = self._rebinner.get_new_start_and_stop(sa_min, sa_max)
 
- 
         return sa_min, sa_max
 
     @property
@@ -436,8 +428,15 @@ class PolarLike(PluginPrototype):
 
         return sa_max - sa_min
 
-        
-    def display(self, ax=None, show_data=True, show_model=True, show_total=False, model_kwargs={}, data_kwargs={}, edges=True, min_rate=None):
+    def display(self,
+                ax=None,
+                show_data=True,
+                show_model=True,
+                show_total=False,
+                model_kwargs={},
+                data_kwargs={},
+                edges=True,
+                min_rate=None):
         """
 
         :param ax:
@@ -448,46 +447,38 @@ class PolarLike(PluginPrototype):
         :param data_kwargs:
         :return:
         """
-        
-        tmp = (( self._observed_counts / self._exposure) - self._background_counts / self._background_exposure)
+
+        tmp = ((self._observed_counts / self._exposure) - self._background_counts / self._background_exposure)
 
         scattering_edges = np.array(self._observation.edges)
 
         sa_min, sa_max = scattering_edges[:-1], scattering_edges[1:]
 
-        
-        tmp_db = (( self._observed_counts / self._exposure) - self._background_counts / self._background_exposure)/(sa_max - sa_min)
+        tmp_db = ((self._observed_counts / self._exposure) - self._background_counts / self._background_exposure) / (
+            sa_max - sa_min)
 
-
-
-        
         old_rebinner = self._rebinner
 
         if min_rate is not None:
 
-
-            
-
-            rebinner = Rebinner(tmp_db, min_rate, mask = None)
+            rebinner = Rebinner(tmp_db, min_rate, mask=None)
 
             self._apply_rebinner(rebinner)
-
 
             net_rate = rebinner.rebin(tmp)
         else:
 
             net_rate = tmp
 
-        
         sa_min, sa_max = self.scattering_boundaries
-        
+
         if show_total:
             show_model = False
             show_data = False
 
         if ax is None:
 
-            fig, ax = plt.subplots()                
+            fig, ax = plt.subplots()
 
         else:
 
@@ -497,7 +488,7 @@ class PolarLike(PluginPrototype):
         if show_total:
 
             total_rate = self._current_observed_counts / self._exposure / self.bin_widths
-            bkg_rate = self._current_background_counts / self._background_exposure /self.bin_widths
+            bkg_rate = self._current_background_counts / self._background_exposure / self.bin_widths
 
             total_errors = np.sqrt(total_rate)
 
@@ -509,34 +500,17 @@ class PolarLike(PluginPrototype):
 
                 bkg_errors = self._current_background_count_errors / self.bin_widths
 
-            
-                            
-                
-            ax.hlines(
-                total_rate,
-                sa_min,
-                sa_max,
-                color='#7D0505',
-                **data_kwargs)
+            ax.hlines(total_rate, sa_min, sa_max, color='#7D0505', **data_kwargs)
             ax.vlines(
-                np.mean([xs],axis=1),
+                np.mean([xs], axis=1),
                 total_rate - total_errors,
                 total_rate + total_errors,
                 color='#7D0505',
                 **data_kwargs)
 
-            ax.hlines(
-                bkg_rate,
-                sa_min,
-                sa_max,
-                color='#0D5BAE',
-                **data_kwargs)
+            ax.hlines(bkg_rate, sa_min, sa_max, color='#0D5BAE', **data_kwargs)
             ax.vlines(
-                np.mean([xs],axis=1),
-                bkg_rate - bkg_errors,
-                bkg_rate + bkg_errors,
-                color='#0D5BAE',
-                **data_kwargs)
+                np.mean([xs], axis=1), bkg_rate - bkg_errors, bkg_rate + bkg_errors, color='#0D5BAE', **data_kwargs)
 
         if show_data:
 
@@ -547,40 +521,33 @@ class PolarLike(PluginPrototype):
 
             else:
 
-                errors = np.sqrt((        self._current_observed_counts/ self._exposure) +
+                errors = np.sqrt((self._current_observed_counts / self._exposure) +
                                  (self._current_background_count_errors / self._background_exposure)**2)
 
-            ax.hlines(net_rate/self.bin_widths, sa_min, sa_max, **data_kwargs)
-            ax.vlines(np.mean([xs], axis=1),
-                      (net_rate - errors)/self.bin_widths, (net_rate + errors)/self.bin_widths,
-                      **data_kwargs)
+            ax.hlines(net_rate / self.bin_widths, sa_min, sa_max, **data_kwargs)
+            ax.vlines(
+                np.mean([xs], axis=1), (net_rate - errors) / self.bin_widths, (net_rate + errors) / self.bin_widths,
+                **data_kwargs)
 
         if show_model:
-
 
             if edges:
 
                 step_plot(
                     ax=ax,
                     xbins=np.vstack([sa_min, sa_max]).T,
-                    y=self._get_model_counts() / self._exposure /self.bin_widths,
+                    y=self._get_model_counts() / self._exposure / self.bin_widths,
                     **model_kwargs)
 
             else:
 
-                y=self._get_model_counts() / self._exposure /self.bin_widths
+                y = self._get_model_counts() / self._exposure / self.bin_widths
                 ax.hlines(y, sa_min, sa_max, **model_kwargs)
 
-                
-
-                
-                
         ax.set_xlabel('Scattering Angle')
         ax.set_ylabel('Net Rate (cnt/s/bin)')
 
         if old_rebinner is not None:
-
-            
 
             # There was a rebinner, use it. Note that the rebinner applies the mask by itself
 
@@ -589,11 +556,19 @@ class PolarLike(PluginPrototype):
         else:
 
             self.remove_rebinning()
-        
+
         return fig
 
-
-    def display_circle(self,ax=None, show_data=True, show_model=True, show_total=False, model_kwargs={}, data_kwargs={}, edges=True, min_rate=None,projection=None):
+    def display_circle(self,
+                       ax=None,
+                       show_data=True,
+                       show_model=True,
+                       show_total=False,
+                       model_kwargs={},
+                       data_kwargs={},
+                       edges=True,
+                       min_rate=None,
+                       projection=None):
         """
 
         :param ax:
@@ -604,54 +579,44 @@ class PolarLike(PluginPrototype):
         :param data_kwargs:
         :return:
         """
-        
-        tmp = (( self._observed_counts / self._exposure) - self._background_counts / self._background_exposure)
+
+        tmp = ((self._observed_counts / self._exposure) - self._background_counts / self._background_exposure)
 
         scattering_edges = np.deg2rad(np.array(self._observation.edges))
-        
+
         sa_min, sa_max = scattering_edges[:-1], scattering_edges[1:]
 
-        
-        tmp_db = (( self._observed_counts / self._exposure) - self._background_counts / self._background_exposure)/(sa_max - sa_min)
+        tmp_db = ((self._observed_counts / self._exposure) - self._background_counts / self._background_exposure) / (
+            sa_max - sa_min)
 
-
-
-        
         old_rebinner = self._rebinner
 
         if min_rate is not None:
 
-
-            
-
-            rebinner = Rebinner(tmp_db, min_rate, mask = None)
+            rebinner = Rebinner(tmp_db, min_rate, mask=None)
 
             self._apply_rebinner(rebinner)
-
 
             net_rate = rebinner.rebin(tmp)
         else:
 
             net_rate = tmp
 
-        
         sa_min, sa_max = np.deg2rad(self.scattering_boundaries)
         xs = np.deg2rad(self.scattering_boundaries)
-        
+
         if show_total:
             show_model = False
             show_data = False
 
         if ax is None:
-          
+
             fig, ax = plt.subplots(subplot_kw=dict(projection=projection))
-                
 
         else:
 
             fig = ax.get_figure()
 
-        
         if show_total:
             pass
 
@@ -669,14 +634,11 @@ class PolarLike(PluginPrototype):
             #     bkg_errors = self._current_background_count_errors / self.bin_widths
 
             # xs = self.scattering_boundaries
-            
+
             # xs = np.deg2rad(xs)
             # sa_min = np.deg2rad(sa_min)
             # sa_max = np.deg2rad(sa_max)
-            
 
-                
-                
             # ax.hlines(
             #     total_rate,
             #     sa_min,
@@ -712,36 +674,25 @@ class PolarLike(PluginPrototype):
 
             else:
 
-                errors = np.sqrt((        self._current_observed_counts/ self._exposure) +
+                errors = np.sqrt((self._current_observed_counts / self._exposure) +
                                  (self._current_background_count_errors / self._background_exposure)**2)
 
-            ax.hlines(net_rate/self.bin_widths, sa_min, sa_max, **data_kwargs)
-            ax.vlines(np.mean(xs, axis=1),
-                      (net_rate - errors)/self.bin_widths, (net_rate + errors)/self.bin_widths,
-                      **data_kwargs)
+            ax.hlines(net_rate / self.bin_widths, sa_min, sa_max, **data_kwargs)
+            ax.vlines(
+                np.mean(xs, axis=1), (net_rate - errors) / self.bin_widths, (net_rate + errors) / self.bin_widths,
+                **data_kwargs)
 
         if show_model:
 
+            y = self._get_model_counts() / self._exposure / self.bin_widths
+            width = sa_max - sa_min
 
-            y=self._get_model_counts() / self._exposure /self.bin_widths
-            width = sa_max-sa_min
-       
-            ax.bar(np.mean(xs,axis=0),
-                   y,
-                   width=sa_max-sa_min,
-                   bottom=y, 
-                   **model_kwargs)
+            ax.bar(np.mean(xs, axis=0), y, width=sa_max - sa_min, bottom=y, **model_kwargs)
 
-                
-
-            
-                
         #ax.set_xlabel('Scattering Angle')
         #ax.set_ylabel('Net Rate (cnt/s/bin)')
 
         if old_rebinner is not None:
-
-            
 
             # There was a rebinner, use it. Note that the rebinner applies the mask by itself
 
@@ -750,10 +701,9 @@ class PolarLike(PluginPrototype):
         else:
 
             self.remove_rebinning()
-        
+
         return fig
 
-    
     @property
     def observation(self):
         return self._observation
@@ -772,7 +722,6 @@ class PolarLike(PluginPrototype):
         # Clean mask and rebinning
 
         self.remove_rebinning()
-        
 
         # Execute whathever
 
@@ -780,18 +729,12 @@ class PolarLike(PluginPrototype):
 
         # Restore mask and rebinner (if any)
 
-
-
         if rebinner is not None:
 
             # There was a rebinner, use it. Note that the rebinner applies the mask by itself
 
             self._apply_rebinner(rebinner)
 
-
-
-
-            
     def rebin_on_background(self, min_number_of_counts):
         """
         Rebin the spectrum guaranteeing the provided minimum number of counts in each background bin. This is usually
@@ -811,7 +754,7 @@ class PolarLike(PluginPrototype):
 
         assert self._background is not None, "This data has no background, cannot rebin on background!"
 
-        rebinner = Rebinner(self._background_counts, min_number_of_counts, mask = None)
+        rebinner = Rebinner(self._background_counts, min_number_of_counts, mask=None)
 
         self._apply_rebinner(rebinner)
 
@@ -827,9 +770,7 @@ class PolarLike(PluginPrototype):
 
         # NOTE: the rebinner takes care of the mask already
 
-
-
-        rebinner = Rebinner(self._observed_counts, min_number_of_counts, mask = None)
+        rebinner = Rebinner(self._observed_counts, min_number_of_counts, mask=None)
 
         self._apply_rebinner(rebinner)
 
