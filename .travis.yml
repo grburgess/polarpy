@@ -7,7 +7,7 @@ services:
 
 before_install:
   - |2
-    docker pull grburgess/polar:finished
+    docker pull grburgess/3ml-science:finished
 
 script:
   - |2
