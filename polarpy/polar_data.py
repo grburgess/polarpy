@@ -1,39 +1,34 @@
 import numpy as np
-
 from threeML.utils.OGIP.response import InstrumentResponse
-
 import h5py
 
 
 class POLARData(object):
+
     def __init__(self, polar_hdf5_file, polar_hdf5_response=None, reference_time=0.):
         """
         container class that converts raw POLAR HDF5 data into useful python
         variables
 
+        This can build both the polarization and spectral data
+        
 
         :param polar_root_file: path to polar event file
         :param reference_time: reference time of the events (tunix?)
         :param rsp_file: path to rsp file
         """
 
+        with h5py.File(polar_hdf5_file, 'r') as f:
 
-        
-
-        
-        with h5py.File(polar_hdf5_file,'r') as f:
-
+            # This gets the spectral response
             rsp_grp = f['rsp']
 
             matrix = rsp_grp['matrix'].value
             ebounds = rsp_grp['ebounds'].value
-            mc_low = rsp_grp['mc_low'].value 
+            mc_low = rsp_grp['mc_low'].value
             mc_high = rsp_grp['mc_high'].value
 
-
             # open the event file
-        
-            
 
             # extract the pedestal corrected ADC channels
             # which are non-integer and possibly
@@ -57,7 +52,6 @@ class POLARData(object):
             # digitize the ADC channels into bins
             # these bins are preliminary
 
-
             # now do the scattering angles
 
             scattering_angles = f['scatter_angle'].value
@@ -68,15 +62,12 @@ class POLARData(object):
             self._scattering_angle_time = (f['time'].value)[idx] - reference_time
             self._scattering_angle_dead_time_fraction = (f['dead_ratio'].value)[idx]
             self._scattering_angles = scattering_angles[idx]
-            
 
         # build the POLAR response
 
         mc_energies = np.append(mc_low, mc_high[-1])
 
-        self._rsp = InstrumentResponse(matrix=matrix,
-                                       ebounds=ebounds,
-                                       monte_carlo_energies=mc_energies)
+        self._rsp = InstrumentResponse(matrix=matrix, ebounds=ebounds, monte_carlo_energies=mc_energies)
 
         # bin the ADC channels
 
@@ -90,7 +81,6 @@ class POLARData(object):
 
                 scatter_bounds = f['bins'].value
 
-
             self._scattering_bins = scatter_bounds
             self._binned_scattering_angles = np.digitize(self._scattering_angles, scatter_bounds)
 
@@ -98,7 +88,7 @@ class POLARData(object):
 
             self._scattering_bins = None
             self._binned_scattering_angles = None
-        
+
     @property
     def pha(self):
         return self._binned_pha
@@ -143,5 +133,3 @@ class POLARData(object):
     def scattering_edges(self):
 
         return self._scattering_bins
-
-        
