@@ -23,13 +23,17 @@ class PolarLike(PluginPrototype):
     def __init__(self, name, observation, background, response, interval_number=None, verbose=False):
         """
 
+        The Polarization likelihood for POLAR. This plugin is heavily modeled off
+        the 3ML dispersion based plugins. It interpolates the spectral photon model
+        over the scattering angle bins to allow for spectral + polarization analysis.
 
 
-        :param interval_number:
-        :param name:
-        :param observation:
-        :param background:
-        :param response:
+
+        :param interval_number: The time interval starting from 1.
+        :param name: The name of the plugin
+        :param observation: The POLAR observation file
+        :param background: The POLAR background file
+        :param response: The POLAR polarization response
 
         :param verbose:
 
@@ -440,6 +444,8 @@ class PolarLike(PluginPrototype):
                 edges=True,
                 min_rate=None):
         """
+
+        Display the data, model, or both.
 
         :param ax:
         :param show_data:
