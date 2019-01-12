@@ -7,7 +7,7 @@ services:
 
 before_install:
   - |2
-    docker pull grburgess/3ml-science:finished
+    docker pull grburgess/polar:finished
 
 script:
   - |2
@@ -18,5 +18,5 @@ script:
                -e TRAVIS_BUILD_NUMBER \
                -e TRAVIS_EVENT_TYPE \
                -v ${TRAVIS_BUILD_DIR}:${TRAVIS_BUILD_DIR} \
-               -it grburgess/3ml-science:finished /bin/bash -c 'source ${TRAVIS_BUILD_DIR}/ci/test.sh'
+               -it grburgess/polar:finished /bin/bash -c 'source ${TRAVIS_BUILD_DIR}/ci/test.sh'
 
