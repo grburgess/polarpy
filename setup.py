@@ -100,7 +100,7 @@ def find_data_files(directory):
 
     return paths
 
-extra_files = find_data_files('popsynth/data')
+extra_files = find_data_files('polarpy/data')
 
         
 setup(
