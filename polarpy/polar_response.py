@@ -7,22 +7,18 @@ import scipy.interpolate as interpolate
 class PolarResponse(object):
 
     def __init__(self, response_file):
+        """FIXME! briefly describe function
+
+        :param response_file: 
+        :returns: 
+        :rtype: 
+
+        """
+        
 
         self._rsp_file = response_file
 
         self._interpolate_rsp()
-
-    # def _get_hist(self, ene,degree,angle):
-
-
-    #     with h5py.File(self._rsp_file,'r') as f:
-
-
-
-    #        # bins = np.array(f['bins'].value)
-
-    #     return  tmp
-
 
     def _interpolate_rsp(self):
         """
