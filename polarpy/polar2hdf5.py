@@ -19,10 +19,13 @@ if has_root:
 
     def polar_polarization_to_hdf5(polarization_root_file, hdf5_out_file):
         """
+        Converts the ROOT POLAR response into an HDF5 file so that users are not 
+        dependent on ROOT.
 
         :param polarization_root_file: The ROOT file from which to build the response
         :param hdf5_out_file: The output HDF5 file name
         """
+        
         energy = []
         degree = []
         angle = []
