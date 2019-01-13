@@ -10,6 +10,8 @@ try:
 
 except (ImportError):
 
+
+    print('MISSING ROOT')
     has_root = False
 
 if has_root:
@@ -89,11 +91,11 @@ if has_root:
                             _, _, hist = th2_to_arrays(f.Get(file_string))
 
                             # Some beautiful matrix math
-                            
+
                             out_matrix[i, j, k, :] = hist
-                            
+
                 # write to the matrix extension
-                            
+
                 database.create_dataset('matrix', data=out_matrix, compression='lzf')
 
                 if np.min(bins) < 0:
@@ -107,16 +109,12 @@ if has_root:
                     assert np.max(bins) <= 360, 'The scattering bins have egdes greater than 360'
 
                 # Save all this out. We MUST write some docs describing the format at some point
-                    
+
                 database.create_dataset('bins', data=bins, compression='lzf')
                 database.create_dataset('pol_ang', data=angle, compression='lzf')
                 database.create_dataset('pol_deg', data=degree, compression='lzf')
                 database.create_dataset('energy', data=energy, compression='lzf')
 
-
-    
-
-                
     def polar_spectra_to_hdf5(polar_root_file, polar_rsp_root_file, hdf5_out_file):
         """
         This function extracts the POLAR spectral information for spectral fitting. 
