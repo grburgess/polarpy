@@ -2,27 +2,26 @@ import h5py
 import numpy as np
 
 
-try:
-    import ROOT
-    from threeML.io.cern_root_utils.io_utils import open_ROOT_file
-    from threeML.io.cern_root_utils.tobject_to_numpy import tree_to_ndarray, th2_to_arrays
+import ROOT
+from threeML.io.cern_root_utils.io_utils import open_ROOT_file
+from threeML.io.cern_root_utils.tobject_to_numpy import tree_to_ndarray, th2_to_arrays
 
-    has_root = True
 
-except(ImportError):
 
-    has_root = False
 
-    
-
-if has_root:
+if True:
 
     def polar_polarization_to_hdf5(polarization_root_file, hdf5_out_file):
         """
+        Converts the ROOT POLAR response into an HDF5 file so that users are not 
+        dependent on ROOT.
 
         :param polarization_root_file: The ROOT file from which to build the response
         :param hdf5_out_file: The output HDF5 file name
         """
+
+        # create a few lists so that we can hold the values
+
         energy = []
         degree = []
         angle = []
@@ -31,8 +30,12 @@ if has_root:
         degree_str = []
         angle_str = []
 
-        
+        # open the ROOT file
+
         with open_ROOT_file(polarization_root_file) as f:
+
+            # This looks at all the info in the ROOT file
+            # It is gross because ROOT is gross.
 
             tmp = [key.GetName() for key in f.GetListOfKeys()]
             tmp = filter(lambda x: 'sim' in x, tmp)
@@ -47,16 +50,16 @@ if has_root:
                 degree_str.append(y)
                 angle_str.append(z)
 
-
-                
+            # There are duplicates everywhere.
+            # This makes sure we only grab what we need.
 
             energy = np.array(np.unique(energy))
             degree = np.array(np.unique(degree))
-            angle  = np.array(np.unique(angle))
+            angle = np.array(np.unique(angle))
 
             energy_str = np.array(np.unique(energy_str))
             degree_str = np.array(np.unique(degree_str))
-            angle_str  = np.array(np.unique(angle_str))
+            angle_str = np.array(np.unique(angle_str))
 
             # just to get the bins
             # must change this from ints later
@@ -67,47 +70,50 @@ if has_root:
 
             out_matrix = np.zeros((len(energy), len(angle), len(degree), len(hist)))
 
+            # Now we will build the HDF5 file. Much eaasier because the format is
+            # beautiful.
+
             with h5py.File(hdf5_out_file, 'w', libver='latest') as database:
 
-                for i,x in enumerate(energy_str):
-
-
+                for i, x in enumerate(energy_str):
 
                     for j, y in enumerate(angle_str):
-
-
 
                         for k, z in enumerate(degree_str):
 
                             file_string = 'sim_%s_%s_%s' % (x, z, y)
 
-                            _ , _, hist = th2_to_arrays(f.Get(file_string))
+                            _, _, hist = th2_to_arrays(f.Get(file_string))
 
-                            out_matrix[i,j,k,:] = hist
+                            # Some beautiful matrix math
 
+                            out_matrix[i, j, k, :] = hist
 
+                # write to the matrix extension
 
-                database.create_dataset('matrix',data=out_matrix,compression='lzf')
-
+                database.create_dataset('matrix', data=out_matrix, compression='lzf')
 
                 if np.min(bins) < 0:
-                    # we will try to automatically correct for the badly specified bins
+                    # we will try to automatically correct for the
+                    # badly specified bins
                     bins = np.array(bins)
 
                     bins += -np.min(bins)
 
-                    assert np.min(bins) >=0, 'The scattering bins have egdes less than zero'
-                    assert np.max(bins) <=360, 'The scattering bins have egdes greater than 360'
+                    assert np.min(bins) >= 0, 'The scattering bins have egdes less than zero'
+                    assert np.max(bins) <= 360, 'The scattering bins have egdes greater than 360'
 
-                    
-                
+                # Save all this out. We MUST write some docs describing the format at some point
+
                 database.create_dataset('bins', data=bins, compression='lzf')
                 database.create_dataset('pol_ang', data=angle, compression='lzf')
                 database.create_dataset('pol_deg', data=degree, compression='lzf')
-                database.create_dataset('energy',data=energy,compression='lzf')
+                database.create_dataset('energy', data=energy, compression='lzf')
 
     def polar_spectra_to_hdf5(polar_root_file, polar_rsp_root_file, hdf5_out_file):
         """
+        This function extracts the POLAR spectral information for spectral fitting. 
+        These files can be further reduced the PHA FITS files with 3ML
 
         :param polar_root_file: The spectral ROOT file
         :param polar_rsp_root_file: The response ROOT file
@@ -179,11 +185,9 @@ if has_root:
             outfile.create_dataset('energy', data=tmp['Energy'], compression='lzf')
 
             outfile.create_dataset('scatter_angle', data=tmp['scatter_angle'], compression='lzf')
-            
+
             outfile.create_dataset('dead_ratio', data=tmp['dead_ratio'], compression='lzf')
 
             outfile.create_dataset('time', data=tmp['tunix'], compression='lzf')
 
-            
-            
             f.Close()

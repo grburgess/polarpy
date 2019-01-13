@@ -2,15 +2,24 @@ import h5py
 import numpy as np
 
 from threeML.utils.polarization.binned_polarization import BinnedModulationCurve
-#from polarpy.polarlike import PolarLike
+
 
 class ModulationCurveFile(object):
 
-    def __init__(self, counts, scattering_bins, exposures, count_errors=None, sys_errors=None, scale_factor=1.,
-                 mission=None, instrument=None, tstart=None, tstop=None):
+    def __init__(self,
+                 counts,
+                 scattering_bins,
+                 exposures,
+                 count_errors=None,
+                 sys_errors=None,
+                 scale_factor=1.,
+                 mission=None,
+                 instrument=None,
+                 tstart=None,
+                 tstop=None):
         """
 
-        A int for modulation curve to facilitate  the reading and writing of files
+        A interface for the  modulation curve to facilitate  the reading and writing of files
 
         :param counts: a matrix of counts where the rows are time intervals and the columns are scattering bins
         :param scattering_bins: and array of scattering bin edges
@@ -23,7 +32,6 @@ class ModulationCurveFile(object):
         :param tstart: an array of start times for the intervals
         :param tstop: an array of stop times for the intervals
         """
-
 
         # make sure that all the arrays are the correct shape
 
@@ -59,9 +67,9 @@ class ModulationCurveFile(object):
         self._count_errors = count_errors
 
         # correct start and stops
-        tmp = [tstart,tstop]
+        tmp = [tstart, tstop]
 
-        for i,_ in enumerate(tmp):
+        for i, _ in enumerate(tmp):
 
             if tmp[i] is not None:
                 tmp[i] = np.atleast_1d(tmp[i])
@@ -203,16 +211,17 @@ class ModulationCurveFile(object):
         if self._sys_errors is not None:
             sys_errors = self._sys_errors[interval]
 
-        return BinnedModulationCurve(counts=self._counts[interval],
-                                     exposure=self._exposures[interval],
-                                     abounds=self._scattering_bins,
-                                     count_errors=count_errors,
-                                     sys_errors=sys_errors,
-                                     scale_factor=self._scale_factor,
-                                     is_poisson=self._is_poisson,
-                                     instrument=self._instrument,
-                                     tstart=self._tstart,
-                                     tstop=self._tstop)
+        return BinnedModulationCurve(
+            counts=self._counts[interval],
+            exposure=self._exposures[interval],
+            abounds=self._scattering_bins,
+            count_errors=count_errors,
+            sys_errors=sys_errors,
+            scale_factor=self._scale_factor,
+            is_poisson=self._is_poisson,
+            instrument=self._instrument,
+            tstart=self._tstart,
+            tstop=self._tstop)
 
     @classmethod
     def from_binned_modulation_curve(cls, binned_mod_curve):
@@ -238,29 +247,27 @@ class ModulationCurveFile(object):
     @classmethod
     def from_list_of_plugins(cls, plugins, kind='total'):
 
-        assert (kind=='total') or (kind=='background'), 'invalid kind. Must be totla or background'
+        assert (kind == 'total') or (kind == 'background'), 'invalid kind. Must be totla or background'
 
-        out= dict(tstart = [],
-                  tstop  = [],
-                  counts = [],
-                  count_errors =[],
-                  sys_errors = [],
-                  exposures = [],
-        )
+        out = dict(
+            tstart=[],
+            tstop=[],
+            counts=[],
+            count_errors=[],
+            sys_errors=[],
+            exposures=[],)
         for plugin in plugins:
 
-#            assert isinstance(plugin, PolarLike), 'must be a PolarLike plugin'
+            #            assert isinstance(plugin, PolarLike), 'must be a PolarLike plugin'
 
-            if kind=='total':
+            if kind == 'total':
 
                 bmc = plugin.observation
 
-            elif kind =='background':
+            elif kind == 'background':
 
                 bmc = plugin.background
 
-            
-            
             out['tstart'].append(bmc.tstart)
             out['tstop'].append(bmc.tstop)
             out['counts'].append(bmc.counts)
@@ -268,15 +275,11 @@ class ModulationCurveFile(object):
             out['sys_errors'].append(bmc.sys_errors)
             out['exposures'].append(bmc.exposure)
 
-        
-            
         for k, v in out.items():
 
             if np.all(np.array(v) == None):
                 out[k] = None
-                
 
-            
         return cls(counts=out['counts'],
                    exposures=out['exposures'],
                    scattering_bins=bmc.edges,
@@ -286,11 +289,8 @@ class ModulationCurveFile(object):
                    mission=bmc.mission,
                    instrument=bmc.instrument,
                    tstart=out['tstart'],
-                   tstop=out['tstop']
-        )
+                   tstop=out['tstop'])
 
-        
-    
     @property
     def counts(self):
         return self._counts
@@ -302,6 +302,3 @@ class ModulationCurveFile(object):
     @property
     def exposures(self):
         return self._exposures
-
-
-    
