@@ -4,6 +4,10 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/1080169383a3b033ad93/maintainability)](https://codeclimate.com/github/grburgess/polarpy/maintainability)
 
 # polarpy
-The gamma-ray polarimeter POLAR on board the Chinese space-station observed gamma-rays from XXX-XXX keV and collected both spectral and polarization data from a variety of astrophysical objects including gamma-ray bursts.
+The gamma-ray polarimeter POLAR on board the Chinese space-station observed gamma-rays from 80-600 keV and collected both spectral and polarization data from a variety of astrophysical objects including gamma-ray bursts.
 
-This suite of tools allows for the reduction, and analysis of the data in the 3ML framework.
+This suite of tools allows for the reduction, and analysis of the data in the 3ML framework. 
+
+The RAW POLAR data are in ROOT format. This package provides conversion tools to create data in HDF5 format.
+
+If you find the code and or methodlogy useful, please cite [Burgess, Kole, et al 2019](www.google.com).
