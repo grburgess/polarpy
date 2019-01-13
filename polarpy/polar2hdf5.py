@@ -1,20 +1,15 @@
 import h5py
 import numpy as np
 
-try:
-    import ROOT
-    from threeML.io.cern_root_utils.io_utils import open_ROOT_file
-    from threeML.io.cern_root_utils.tobject_to_numpy import tree_to_ndarray, th2_to_arrays
 
-    has_root = True
-
-except (ImportError):
+import ROOT
+from threeML.io.cern_root_utils.io_utils import open_ROOT_file
+from threeML.io.cern_root_utils.tobject_to_numpy import tree_to_ndarray, th2_to_arrays
 
 
-    print('MISSING ROOT')
-    has_root = False
 
-if has_root:
+
+if True:
 
     def polar_polarization_to_hdf5(polarization_root_file, hdf5_out_file):
         """
