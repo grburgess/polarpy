@@ -18,5 +18,5 @@ script:
                -e TRAVIS_BUILD_NUMBER \
                -e TRAVIS_EVENT_TYPE \
                -v ${TRAVIS_BUILD_DIR}:${TRAVIS_BUILD_DIR} \
-               -it grburgess/polar:finished /bin/bash -c 'source ${TRAVIS_BUILD_DIR}/ci/test.sh'
+               -it grburgess/polar:finished -c 'source ${TRAVIS_BUILD_DIR}/ci/test.sh'
 
