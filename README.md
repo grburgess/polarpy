@@ -2,6 +2,7 @@
 [![codecov](https://codecov.io/gh/grburgess/polarpy/branch/master/graph/badge.svg)](https://codecov.io/gh/grburgess/polarpy)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/grburgess/polarpy/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/grburgess/polarpy/?branch=master)
 [![Maintainability](https://api.codeclimate.com/v1/badges/1080169383a3b033ad93/maintainability)](https://codeclimate.com/github/grburgess/polarpy/maintainability)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2558718.svg)](https://doi.org/10.5281/zenodo.2558718)
 
 # polarpy
 The gamma-ray polarimeter POLAR on board the Chinese space-station observed gamma-rays from 80-600 keV and collected both spectral and polarization data from a variety of astrophysical objects including gamma-ray bursts.
