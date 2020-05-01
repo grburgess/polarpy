@@ -1,18 +1,19 @@
 import collections
 from contextlib import contextmanager
+
 import matplotlib.pyplot as plt
 import numpy as np
 
 from astromodels import Parameter, Uniform_prior
+from polarpy.modulation_curve_file import ModulationCurveFile
+from polarpy.polar_response import PolarResponse
 from threeML import PluginPrototype
 from threeML.io.plotting.step_plot import step_plot
 from threeML.utils.binner import Rebinner
-from threeML.utils.polarization.binned_polarization import BinnedModulationCurve
-from threeML.utils.statistics.likelihood_functions import poisson_observed_poisson_background, \
-    poisson_observed_gaussian_background
-
-from polarpy.modulation_curve_file import ModulationCurveFile
-from polarpy.polar_response import PolarResponse
+from threeML.utils.polarization.binned_polarization import \
+    BinnedModulationCurve
+from threeML.utils.statistics.likelihood_functions import (
+    poisson_observed_gaussian_background, poisson_observed_poisson_background)
 
 
 class PolarLike(PluginPrototype):
@@ -49,7 +50,8 @@ class PolarLike(PluginPrototype):
             read_file = ModulationCurveFile.read(observation)
 
             # create the bmc
-            observation = read_file.to_binned_modulation_curve(interval=interval_number)
+            observation = read_file.to_binned_modulation_curve(
+                interval=interval_number)
 
         # the same applies for the background
         if isinstance(background, str):
@@ -58,17 +60,20 @@ class PolarLike(PluginPrototype):
             # this is a file
             read_file = ModulationCurveFile.read(background)
 
-            background = read_file.to_binned_modulation_curve(interval=interval_number)
+            background = read_file.to_binned_modulation_curve(
+                interval=interval_number)
 
-        assert isinstance(observation, BinnedModulationCurve), 'The observation must be a BinnedModulationCurve'
-        assert isinstance(background, BinnedModulationCurve), 'The observation must be a BinnedModulationCurve'
+        assert isinstance(
+            observation, BinnedModulationCurve), 'The observation must be a BinnedModulationCurve'
+        assert isinstance(
+            background, BinnedModulationCurve), 'The observation must be a BinnedModulationCurve'
 
         # attach the required variables
 
         self._observation = observation
         self._background = background
 
-        self._observed_counts = observation.counts
+        self._observed_counts = observation.counts.astype(np.int64)
         self._background_counts = background.counts
         self._background_count_errors = background.count_errors
         self._scale = observation.exposure / background.exposure
@@ -144,7 +149,8 @@ class PolarLike(PluginPrototype):
 
         self._nuisance_parameter.free = True
         self._nuisance_parameter.bounds = (lower, upper)
-        self._nuisance_parameter.prior = Uniform_prior(lower_bound=lower, upper_bound=upper)
+        self._nuisance_parameter.prior = Uniform_prior(
+            lower_bound=lower, upper_bound=upper)
         if self._verbose:
             print('Using effective area correction')
 
@@ -216,7 +222,8 @@ class PolarLike(PluginPrototype):
             if self._background.is_poisson:
                 _, background_model_counts = poisson_observed_poisson_background(
                     self._current_observed_counts, self._current_background_counts, self._scale, source_model_counts)
-                randomized_background_counts = np.random.poisson(background_model_counts)
+                randomized_background_counts = np.random.poisson(
+                    background_model_counts)
 
                 background_count_errors = None
             else:
@@ -225,7 +232,8 @@ class PolarLike(PluginPrototype):
                     self._current_observed_counts, self._current_background_counts,
                     self._current_background_count_errors, source_model_counts)
 
-                randomized_background_counts = np.zeros_like(background_model_counts)
+                randomized_background_counts = np.zeros_like(
+                    background_model_counts)
 
                 idx = (self._background_count_errors > 0)
 
@@ -250,11 +258,13 @@ class PolarLike(PluginPrototype):
 
             # Randomize expectations for the source
 
-            randomized_source_counts = np.random.poisson(source_model_counts + background_model_counts)
+            randomized_source_counts = np.random.poisson(
+                source_model_counts + background_model_counts)
 
             #
 
-            new_observation = self._observation.clone(new_counts=randomized_source_counts)
+            new_observation = self._observation.clone(
+                new_counts=randomized_source_counts)
 
             new_background = self._background.clone(
                 new_counts=randomized_background_counts, new_count_errors=background_count_errors)
@@ -302,7 +312,8 @@ class PolarLike(PluginPrototype):
 
         # now we need to get the intergal flux
 
-        _, integral = self._get_diff_flux_and_integral(likelihood_model_instance)
+        _, integral = self._get_diff_flux_and_integral(
+            likelihood_model_instance)
 
         self._integral_flux = integral
 
@@ -315,11 +326,13 @@ class PolarLike(PluginPrototype):
         # Make a function which will stack all point sources (OGIP do not support spatial dimension)
 
         def differential_flux(scattering_edges):
-            fluxes = likelihood_model.get_point_source_fluxes(0, scattering_edges, tag=self._tag)
+            fluxes = likelihood_model.get_point_source_fluxes(
+                0, scattering_edges, tag=self._tag)
 
             # If we have only one point source, this will never be executed
             for i in range(1, n_point_sources):
-                fluxes += likelihood_model.get_point_source_fluxes(i, scattering_edges, tag=self._tag)
+                fluxes += likelihood_model.get_point_source_fluxes(
+                    i, scattering_edges, tag=self._tag)
 
             return fluxes
 
@@ -400,9 +413,11 @@ class PolarLike(PluginPrototype):
         :param file_name: the file name header. The .h5 extension is added automatically
         """
         # first create a file container
-        observation_file = ModulationCurveFile.from_binned_modulation_curve(self._observation)
+        observation_file = ModulationCurveFile.from_binned_modulation_curve(
+            self._observation)
 
-        background_file = ModulationCurveFile.from_binned_modulation_curve(self._background)
+        background_file = ModulationCurveFile.from_binned_modulation_curve(
+            self._background)
 
         observation_file.writeto("%s.h5" % file_name)
 
@@ -423,7 +438,8 @@ class PolarLike(PluginPrototype):
         if self._rebinner is not None:
             # Get the rebinned chans. NOTE: these are already masked
 
-            sa_min, sa_max = self._rebinner.get_new_start_and_stop(sa_min, sa_max)
+            sa_min, sa_max = self._rebinner.get_new_start_and_stop(
+                sa_min, sa_max)
 
         return sa_min, sa_max
 
@@ -456,7 +472,8 @@ class PolarLike(PluginPrototype):
         :return:
         """
 
-        tmp = ((self._observed_counts / self._exposure) - self._background_counts / self._background_exposure)
+        tmp = ((self._observed_counts / self._exposure) -
+               self._background_counts / self._background_exposure)
 
         scattering_edges = np.array(self._observation.edges)
 
@@ -498,7 +515,8 @@ class PolarLike(PluginPrototype):
 
             total_rate = self._current_observed_counts / self._exposure / self.bin_widths
 
-            bkg_rate = self._current_background_counts / self._background_exposure / self.bin_widths
+            bkg_rate = self._current_background_counts / \
+                self._background_exposure / self.bin_widths
 
             total_errors = np.sqrt(total_rate)
 
@@ -510,7 +528,8 @@ class PolarLike(PluginPrototype):
 
                 bkg_errors = self._current_background_count_errors / self.bin_widths
 
-            ax.hlines(total_rate, sa_min, sa_max, color='#7D0505', **data_kwargs)
+            ax.hlines(total_rate, sa_min, sa_max,
+                      color='#7D0505', **data_kwargs)
             ax.vlines(
                 np.mean([xs], axis=1),
                 total_rate - total_errors,
@@ -534,10 +553,11 @@ class PolarLike(PluginPrototype):
                 errors = np.sqrt((self._current_observed_counts / self._exposure) +
                                  (self._current_background_count_errors / self._background_exposure)**2)
 
-            
-            ax.hlines(net_rate / self.bin_widths, sa_min, sa_max, **data_kwargs)
+            ax.hlines(net_rate / self.bin_widths,
+                      sa_min, sa_max, **data_kwargs)
             ax.vlines(
-                np.mean([xs], axis=1), (net_rate - errors) / self.bin_widths, (net_rate + errors) / self.bin_widths,
+                np.mean([xs], axis=1), (net_rate - errors) /
+                self.bin_widths, (net_rate + errors) / self.bin_widths,
                 **data_kwargs)
 
         if show_model:
@@ -765,7 +785,8 @@ class PolarLike(PluginPrototype):
 
         assert self._background is not None, "This data has no background, cannot rebin on background!"
 
-        rebinner = Rebinner(self._background_counts, min_number_of_counts, mask=None)
+        rebinner = Rebinner(self._background_counts,
+                            min_number_of_counts, mask=None)
 
         self._apply_rebinner(rebinner)
 
@@ -781,7 +802,8 @@ class PolarLike(PluginPrototype):
 
         # NOTE: the rebinner takes care of the mask already
 
-        rebinner = Rebinner(self._observed_counts, min_number_of_counts, mask=None)
+        rebinner = Rebinner(self._observed_counts,
+                            min_number_of_counts, mask=None)
 
         self._apply_rebinner(rebinner)
 
@@ -792,16 +814,19 @@ class PolarLike(PluginPrototype):
         # Apply the rebinning to everything.
         # NOTE: the output of the .rebin method are the vectors with the mask *already applied*
 
-        self._current_observed_counts, = self._rebinner.rebin(self._observed_counts)
+        self._current_observed_counts, = self._rebinner.rebin(
+            self._observed_counts)
 
         if self._background is not None:
 
-            self._current_background_counts, = self._rebinner.rebin(self._background_counts)
+            self._current_background_counts, = self._rebinner.rebin(
+                self._background_counts)
 
             if self._background_count_errors is not None:
                 # NOTE: the output of the .rebin method are the vectors with the mask *already applied*
 
-                self._current_background_count_errors, = self._rebinner.rebin_errors(self._background_count_errors)
+                self._current_background_count_errors, = self._rebinner.rebin_errors(
+                    self._background_count_errors)
 
         if self._verbose:
             print("Now using %s bins" % self._rebinner.n_bins)

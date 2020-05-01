@@ -1,5 +1,5 @@
-import numpy as np
 import h5py
+import numpy as np
 import scipy.interpolate as interpolate
 
 
@@ -40,7 +40,7 @@ class PolarResponse(object):
 
             # the bin widths are hard coded right now.
             # this should be IMPROVED!
-            
+
             for ene in energy:
 
                 ene_lo.append(ene - 2.5)
@@ -54,7 +54,7 @@ class PolarResponse(object):
 
             # get the bin centers as these are where things
             # should be evaluated
-            
+
             bin_center = 0.5 * (bins[:-1] + bins[1:])
 
             all_interp = []
@@ -62,15 +62,16 @@ class PolarResponse(object):
             # now we construct a series of interpolation
             # functions that are called during the fit.
             # we use some nice matrix math to handle this
-            
+
             for i, bm in enumerate(bin_center):
 
-                this_interpolator = interpolate.RegularGridInterpolator((energy, pol_ang, pol_deg), f['matrix'][..., i])
+                this_interpolator = interpolate.RegularGridInterpolator(
+                    (energy, pol_ang, pol_deg), f['matrix'][..., i])
+
                 all_interp.append(this_interpolator)
 
-
             # finally we attach all of this to the class
-                
+
             self._all_interp = all_interp
 
             self._ene_lo = ene_lo
@@ -124,7 +125,7 @@ class PolarResponse(object):
         :rtype: 
 
         """
-        
+
         return self._n_scatter_bins
 
     @property
@@ -136,7 +137,7 @@ class PolarResponse(object):
         :rtype: 
 
         """
-        
+
         return self._scattering_bins
 
     @property
@@ -148,7 +149,7 @@ class PolarResponse(object):
         :rtype: 
 
         """
-        
+
         return self._scattering_bins_lo
 
     @property
@@ -172,5 +173,5 @@ class PolarResponse(object):
         :rtype: 
 
         """
-        
+
         return self._all_interp
