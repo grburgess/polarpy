@@ -3,6 +3,7 @@ from contextlib import contextmanager
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numba as nb
 
 from astromodels import Parameter, Uniform_prior
 from polarpy.modulation_curve_file import ModulationCurveFile
@@ -363,16 +364,19 @@ class PolarLike(PluginPrototype):
         eval_points = np.array(
             [[ene, self._pol_angle.value, self._pol_degree.value] for ene in self._response.energy_mid])
 
-        expectation = []
+        # expectation = []
+        
 
-        # create the model counts by summing over energy
+        # # create the model counts by summing over energy
 
-        for i, interpolator in enumerate(self._all_interp):
-            rate = np.dot(interpolator(eval_points), intergal_spectrum)
+        # for i, interpolator in enumerate(self._all_interp):
+        #     rate = np.dot(interpolator(eval_points), intergal_spectrum)
 
-            expectation.append(rate)
+        #     expectation.append(rate)
 
-        return np.array(expectation)
+
+
+        return _interpolate_all(self._all_interp, intergal_spectrum, eval_points)
 
     def _get_model_counts(self):
 
@@ -843,3 +847,20 @@ class PolarLike(PluginPrototype):
         self._current_observed_counts = self._observed_counts
         self._current_background_counts = self._background_counts
         self._current_background_count_errors = self._background_count_errors
+
+
+
+
+@nb.njit(fastmath=True)
+def _interpolate_all(interpolators, integral_spectrum, eval_points):
+
+    N = len(interpolators)
+    expectation = np.empty(N)
+
+    
+    
+    for n in range(N):
+    
+        expectation[n] = np.dot(interpolators[n].evaluate(eval_points), integral_spectrum )
+
+    return expectation
