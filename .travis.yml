@@ -1,12 +1,10 @@
 language: python
 python:
 - '3.7'
-before_install:
 
-  - pip install numpy>=1.18 cython coverage pytest pytest-cov codecov 
-  
 install:
 
+  - pip install --upgrade numpy>=1.18 cython coverage pytest pytest-cov codecov 
   - python setup.py install
 
 env: NUMBA_DISABLE_JIT=1
