@@ -153,6 +153,7 @@ def test_simulations():
     polarlike = PolarLike('test', observation=obs,
                           background=bak, response=prsp)
 
+
     pl = Powerlaw()
     pz = LinearPolarization(10, 10)
 
