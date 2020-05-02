@@ -4,7 +4,7 @@ python:
 
 install:
   
-  - pip install --upgrade astromodels numpy>=1.18 cython coverage pytest pytest-cov codecov 
+  - pip install --upgrade pymultinest astromodels numpy>=1.18 cython coverage pytest pytest-cov codecov 
   - python setup.py install
 
 env: NUMBA_DISABLE_JIT=1
