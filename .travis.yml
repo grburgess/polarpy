@@ -16,7 +16,7 @@ install:
   - pip install --upgrade pymultinest astromodels numpy>=1.18 cython coverage pytest pytest-cov codecov 
   - python setup.py install
 
-env: NUMBA_DISABLE_JIT=1
+env: NUMBA_DISABLE_JIT=1 MULTINEST_TAG=v3.10 WITHMPI=no
 script:
   - python -m pytest -vv --cov=polarpy/
 #- codecov --token=2adee64a-60b0-4c7e-b94c-512ea2b8e794
