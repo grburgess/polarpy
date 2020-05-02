@@ -1,11 +1,16 @@
 language: python
 python:
 - '3.7'
+before_install:
+
+  - pip install numpy>=1.18 cython coverage pytest pytest-cov codecov 
+  
 install:
-- pip install numpy>=1.18 cython coverage pytest pytest-cov codecov 
-- python setup.py install
+
+  - python setup.py install
+
 env: NUMBA_DISABLE_JIT=1
 script:
-- python -m pytest -vv --cov=polarpy/
+  - python -m pytest -vv --cov=polarpy/
 #- codecov --token=2adee64a-60b0-4c7e-b94c-512ea2b8e794
 
