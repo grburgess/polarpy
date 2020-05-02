@@ -13,7 +13,7 @@ script:
   - |2
 
     docker run -e TRAVIS_BUILD_DIR \
-               -e TRAVIS_PYTHON_VERSION=2.7 \
+               -e TRAVIS_PYTHON_VERSION=3.7 \
                -e TRAVIS_BRANCH \
                -e TRAVIS_BUILD_NUMBER \
                -e TRAVIS_EVENT_TYPE \
