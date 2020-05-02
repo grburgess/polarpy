@@ -3,7 +3,7 @@ python:
 - '3.6'
 - '3.7'
 install:
-- pip install --upgrade numpy coverage pytest pytest-cov cython codecov
+- pip install --upgrade  coverage pytest pytest-cov  codecov
 - python setup.py install
 env: NUMBA_DISABLE_JIT=1
 script:
