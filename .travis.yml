@@ -1,7 +1,6 @@
 language: python
 python:
-- '3.7'
-
+        - "3.7"
 
 # before_install:
 #   - sudo apt-get install -qq libblas{3,-dev} liblapack{3,-dev} libatlas{3-base,-dev} cmake build-essential git gfortran
@@ -9,15 +8,13 @@ python:
 #   - git clone --branch ${MULTINEST_TAG} https://github.com/JohannesBuchner/MultiNest
 #   - mkdir -p MultiNest/build; pushd MultiNest/build; cmake .. && make && popd
 #   - export LD_LIBRARY_PATH=MultiNest/lib/:${LD_LIBRARY_PATH}
-  
 
 install:
-  
-  - pip install --upgrade threeml astromodels numpy>=1.18 cython coverage pytest pytest-cov codecov 
-  - python setup.py install
+        - pip install --upgrade threeML astromodels numpy>=1.18 cython coverage pytest pytest-cov codecov
+        - python setup.py install
 
 env: NUMBA_DISABLE_JIT=1 MULTINEST_TAG=v3.10 WITHMPI=no
 script:
-  - python -m pytest -vv --cov=polarpy/
+        - python -m pytest -vv --cov=polarpy/
 #- codecov --token=2adee64a-60b0-4c7e-b94c-512ea2b8e794
 
