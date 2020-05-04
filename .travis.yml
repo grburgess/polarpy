@@ -12,7 +12,7 @@ python:
 install:
 
         - pip install --upgrade astromodels numpy>=1.18 cython coverage pytest pytest-cov codecov
-        - pin install git+https://github.com/threeML/threeML
+        - pip install git+https://github.com/threeML/threeML
         - python setup.py install
 
 env: NUMBA_DISABLE_JIT=1 MULTINEST_TAG=v3.10 WITHMPI=no
