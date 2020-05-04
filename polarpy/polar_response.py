@@ -1,9 +1,10 @@
 import h5py
-import numpy as np
 import numba as nb
+import numpy as np
+from interpolation.splines import eval_linear
+
 #import scipy.interpolate as interpolate
 
-from interpolation.splines import eval_linear
 
 spec = [
     ("_values", nb.float64[:, :, :]),
@@ -22,17 +23,14 @@ spec = [
 
 @nb.jitclass(spec)
 class FastGridInterpolate(object):
-    
+
     def __init__(self, grid, values):
         self._grid = grid
         self._values = np.ascontiguousarray(values)
-        
+
     def evaluate(self, v):
-        
+
         return eval_linear(self._grid, self._values, v)
-        
-
-
 
 
 class PolarResponse(object):
