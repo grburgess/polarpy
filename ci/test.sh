@@ -18,6 +18,9 @@ cp -R ${TRAVIS_BUILD_DIR}/* my_work_dir/
 
 cd my_work_dir
 
+pip install pytest coverage pytest-cov codecov
+
+python setup.py install
 
 python -m pytest -vv --cov=polarpy
 

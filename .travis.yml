@@ -1,22 +1,15 @@
-sudo: required
+language: python
+python:
+        - "3.7"
 
-language: generic
+install:
 
-services:
-  - docker
+        - pip install --upgrade astromodels numpy>=1.18 cython coverage pytest pytest-cov codecov
+        - pip install git+https://github.com/threeML/threeML
+        - python setup.py install
 
-before_install:
-  - |2
-    docker pull grburgess/polar:finished
-
+env: NUMBA_DISABLE_JIT=1
 script:
-  - |2
-
-    docker run -e TRAVIS_BUILD_DIR \
-               -e TRAVIS_PYTHON_VERSION=2.7 \
-               -e TRAVIS_BRANCH \
-               -e TRAVIS_BUILD_NUMBER \
-               -e TRAVIS_EVENT_TYPE \
-               -v ${TRAVIS_BUILD_DIR}:${TRAVIS_BUILD_DIR} \
-               -it grburgess/polar:finished -c 'source ${TRAVIS_BUILD_DIR}/ci/test.sh'
+        - python -m pytest -vv --cov=polarpy/
+#- codecov --token=2adee64a-60b0-4c7e-b94c-512ea2b8e794
 

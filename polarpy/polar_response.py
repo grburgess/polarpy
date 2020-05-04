@@ -1,6 +1,36 @@
 import h5py
+import numba as nb
 import numpy as np
-import scipy.interpolate as interpolate
+from interpolation.splines import eval_linear
+
+#import scipy.interpolate as interpolate
+
+
+spec = [
+    ("_values", nb.float64[:, :, :]),
+    (
+        "_grid",
+        nb.typeof(
+            (
+                np.zeros(3, dtype=np.float64),
+                np.zeros(3, dtype=np.float64),
+                np.zeros(3, dtype=np.float64),
+            )
+        ),
+    ),
+]
+
+
+@nb.jitclass(spec)
+class FastGridInterpolate(object):
+
+    def __init__(self, grid, values):
+        self._grid = grid
+        self._values = np.ascontiguousarray(values)
+
+    def evaluate(self, v):
+
+        return eval_linear(self._grid, self._values, v)
 
 
 class PolarResponse(object):
@@ -65,7 +95,7 @@ class PolarResponse(object):
 
             for i, bm in enumerate(bin_center):
 
-                this_interpolator = interpolate.RegularGridInterpolator(
+                this_interpolator = FastGridInterpolate(
                     (energy, pol_ang, pol_deg), f['matrix'][..., i])
 
                 all_interp.append(this_interpolator)
