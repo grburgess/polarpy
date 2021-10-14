@@ -4,6 +4,7 @@ from contextlib import contextmanager
 import matplotlib.pyplot as plt
 import numpy as np
 import numba as nb
+from typing import Optional, List, Dict, Union, Tuple
 
 from astromodels import Parameter, Uniform_prior
 from polarpy.modulation_curve_file import ModulationCurveFile
@@ -11,10 +12,18 @@ from polarpy.polar_response import PolarResponse
 from threeML import PluginPrototype
 from threeML.io.plotting.step_plot import step_plot
 from threeML.utils.binner import Rebinner
-from threeML.utils.polarization.binned_polarization import \
-    BinnedModulationCurve
+from astromodels import Model
+from threeML.utils.polarization.binned_polarization import BinnedModulationCurve
 from threeML.utils.statistics.likelihood_functions import (
-    poisson_observed_gaussian_background, poisson_observed_poisson_background)
+    poisson_observed_gaussian_background,
+    poisson_observed_poisson_background,
+)
+
+
+from threeML.io.logging import setup_logger
+
+
+log = setup_logger(__name__)
 
 
 class PolarLike(PluginPrototype):
@@ -22,7 +31,14 @@ class PolarLike(PluginPrototype):
     Preliminary POLAR polarization plugin
     """
 
-    def __init__(self, name, observation, background, response, interval_number=None, verbose=False):
+    def __init__(
+        self,
+        name: str,
+        observation: Union[str, BinnedModulationCurve],
+        background: Union[str, BinnedModulationCurve],
+        response,
+        interval_number: Optional[int] = None,
+    ) -> None:
         """
 
         The Polarization likelihood for POLAR. This plugin is heavily modeled off
@@ -45,64 +61,92 @@ class PolarLike(PluginPrototype):
         # saved so we must specify a time interval
 
         if isinstance(observation, str):
-            assert interval_number is not None, 'must specify an interval number'
+            if interval_number is None:
+                log.error("must specify an interval number")
+
+                raise AssertionError()
 
             # this is a file
             read_file = ModulationCurveFile.read(observation)
 
             # create the bmc
-            observation = read_file.to_binned_modulation_curve(
-                interval=interval_number)
+            observation: BinnedModulationCurve = (
+                read_file.to_binned_modulation_curve(interval=interval_number)
+            )
 
         # the same applies for the background
         if isinstance(background, str):
-            assert interval_number is not None, 'must specify an interval number'
+
+            if interval_number is None:
+
+                log.error("must specify an interval number")
+
+                raise AssertionError()
 
             # this is a file
             read_file = ModulationCurveFile.read(background)
 
-            background = read_file.to_binned_modulation_curve(
-                interval=interval_number)
+            background: BinnedModulationCurve = (
+                read_file.to_binned_modulation_curve(interval=interval_number)
+            )
 
-        assert isinstance(
-            observation, BinnedModulationCurve), 'The observation must be a BinnedModulationCurve'
-        assert isinstance(
-            background, BinnedModulationCurve), 'The observation must be a BinnedModulationCurve'
+        if not isinstance(observation, BinnedModulationCurve):
+
+            log.error("The observation must be a BinnedModulationCurve")
+
+            raise AssertionError()
+
+        if not isinstance(background, BinnedModulationCurve):
+
+            log.error("The observation must be a BinnedModulationCurve")
+
+            raise AssertionError()
 
         # attach the required variables
 
-        self._observation = observation
-        self._background = background
+        self._observation: BinnedModulationCurve = observation
+        self._background: BinnedModulationCurve = background
 
-        self._observed_counts = observation.counts.astype(np.int64)
-        self._background_counts = background.counts
-        self._background_count_errors = background.count_errors
-        self._scale = observation.exposure / background.exposure
-        self._exposure = observation.exposure
-        self._background_exposure = background.exposure
+        self._observed_counts: np.ndarray = observation.counts.astype(np.int64)
+        self._background_counts: np.ndarray = background.counts
+        self._background_count_errors: Optional[
+            np.ndarray
+        ] = background.count_errors
+        self._scale: float = observation.exposure / background.exposure
+        self._exposure: float = observation.exposure
+        self._background_exposure: float = background.exposure
 
-        self._likelihood_model = None
-        self._rebinner = None
+        self._likelihood_model: Optional[Model] = None
+        self._rebinner: Optional[Rebinner] = None
 
         # now do some double checks
 
-        assert len(self._observed_counts) == len(self._background_counts)
+        if not len(self._observed_counts) == len(self._background_counts):
+
+            log.error("Counts and background are not the same length")
+
+            raise AssertionError(
+                "Counts and background are not the same length"
+            )
 
         self._n_synthetic_datasets = 0
 
         # set up the effective area correction
 
-        self._nuisance_parameter = Parameter(
+        self._nuisance_parameter: Parameter = Parameter(
             "cons_%s" % name,
             1.0,
             min_value=0.8,
             max_value=1.2,
             delta=0.05,
             free=False,
-            desc="Effective area correction for %s" % name)
+            desc="Effective area correction for %s" % name,
+        )
 
-        nuisance_parameters = collections.OrderedDict()
-        nuisance_parameters[self._nuisance_parameter.name] = self._nuisance_parameter
+        nuisance_parameters: Dict[str, Parameter] = collections.OrderedDict()
+        nuisance_parameters[
+            self._nuisance_parameter.name
+        ] = self._nuisance_parameter
 
         # pass to the plugin proto
 
@@ -112,34 +156,47 @@ class PolarLike(PluginPrototype):
         # point to the original ones, but if a rebinner is used and/or a mask is created through set_active_measurements,
         # they will contain the rebinned and/or masked versions
 
-        self._current_observed_counts = self._observed_counts
-        self._current_background_counts = self._background_counts
-        self._current_background_count_errors = self._background_count_errors
-
-        self._verbose = verbose
+        self._current_observed_counts: np.ndarray = self._observed_counts
+        self._current_background_counts: np.ndarray = self._background_counts
+        self._current_background_count_errors: Optional[
+            np.ndarray
+        ] = self._background_count_errors
 
         # we can either attach or build a response
 
-        assert isinstance(response, str) or isinstance(
-            response, PolarResponse), 'The response must be a file name or a PolarResponse'
+        if not isinstance(response, str) or isinstance(response, PolarResponse):
+
+            log.error("The response must be a file name or a PolarResponse")
+
+            raise AssertionError(
+                "The response must be a file name or a PolarResponse"
+            )
 
         if isinstance(response, PolarResponse):
 
-            self._response = response
+            self._response: PolarResponse = response
 
         else:
 
-            self._response = PolarResponse(response)
+            self._response: PolarResponse = PolarResponse(response)
 
         # attach the interpolators to the
 
         self._all_interp = self._response.interpolators
 
         # we also make sure the lengths match up here
-        assert self._response.n_scattering_bins == len(
-            self._observation.counts), 'observation counts shape does not agree with response shape'
 
-    def use_effective_area_correction(self, lower=0.5, upper=1.5):
+        if not self._response.n_scattering_bins == len(
+            self._observation.counts
+        ):
+
+            log.error(
+                "observation counts shape does not agree with response shape"
+            )
+
+            raise AssertionError()
+
+    def use_effective_area_correction(self, lower=0.5, upper=1.5) -> None:
         """
         Use an area constant to correct for response issues
 
@@ -151,11 +208,12 @@ class PolarLike(PluginPrototype):
         self._nuisance_parameter.free = True
         self._nuisance_parameter.bounds = (lower, upper)
         self._nuisance_parameter.prior = Uniform_prior(
-            lower_bound=lower, upper_bound=upper)
-        if self._verbose:
-            print('Using effective area correction')
+            lower_bound=lower, upper_bound=upper
+        )
 
-    def fix_effective_area_correction(self, value=1):
+        log.info(f"Using effective area correction between {lower} and {upper}")
+
+    def fix_effective_area_correction(self, value=1) -> None:
         """
 
         fix the effective area correction to a particular values
@@ -176,11 +234,10 @@ class PolarLike(PluginPrototype):
         self._nuisance_parameter.fix = True
         self._nuisance_parameter.value = value
 
-        if self._verbose:
-            print('Fixing effective area correction')
+        log.info(f"Fixing effective area correction to {value}")
 
     @property
-    def effective_area_correction(self):
+    def effective_area_correction(self) -> Parameter:
 
         return self._nuisance_parameter
 
@@ -192,7 +249,11 @@ class PolarLike(PluginPrototype):
         :return: an BinnedSpectrum or child instance
         """
 
-        assert self._likelihood_model is not None, "You need to set up a model before randomizing"
+        if self._likelihood_model is None:
+
+            log.error("You need to set up a model before randomizing")
+
+            raise AssertionError()
 
         # Keep track of how many syntethic datasets we have generated
 
@@ -200,7 +261,8 @@ class PolarLike(PluginPrototype):
 
         # Generate a name for the new dataset if needed
         if new_name is None:
-            new_name = "%s_sim_%i" % (self.name, self._n_synthetic_datasets)
+
+            new_name = f"{self.name}_sim_{self._n_synthetic_datasets}"
 
         # Generate randomized data depending on the different noise models
 
@@ -221,29 +283,46 @@ class PolarLike(PluginPrototype):
             source_model_counts = self._get_model_counts()
 
             if self._background.is_poisson:
-                _, background_model_counts = poisson_observed_poisson_background(
-                    self._current_observed_counts, self._current_background_counts, self._scale, source_model_counts)
+                (
+                    _,
+                    background_model_counts,
+                ) = poisson_observed_poisson_background(
+                    self._current_observed_counts,
+                    self._current_background_counts,
+                    self._scale,
+                    source_model_counts,
+                )
                 randomized_background_counts = np.random.poisson(
-                    background_model_counts)
+                    background_model_counts
+                )
 
                 background_count_errors = None
             else:
 
-                _, background_model_counts = poisson_observed_gaussian_background(
-                    self._current_observed_counts, self._current_background_counts,
-                    self._current_background_count_errors, source_model_counts)
+                (
+                    _,
+                    background_model_counts,
+                ) = poisson_observed_gaussian_background(
+                    self._current_observed_counts,
+                    self._current_background_counts,
+                    self._current_background_count_errors,
+                    source_model_counts,
+                )
 
                 randomized_background_counts = np.zeros_like(
-                    background_model_counts)
+                    background_model_counts
+                )
 
-                idx = (self._background_count_errors > 0)
+                idx = self._background_count_errors > 0
 
                 randomized_background_counts[idx] = np.random.normal(
-                    loc=background_model_counts[idx], scale=self._background_count_errors[idx])
+                    loc=background_model_counts[idx],
+                    scale=self._background_count_errors[idx],
+                )
 
                 # Issue a warning if the generated background is less than zero, and fix it by placing it at zero
 
-                idx = (randomized_background_counts < 0)    # type: np.ndarray
+                idx = randomized_background_counts < 0  # type: np.ndarray
 
                 negative_background_n = np.sum(idx)
 
@@ -260,22 +339,25 @@ class PolarLike(PluginPrototype):
             # Randomize expectations for the source
 
             randomized_source_counts = np.random.poisson(
-                source_model_counts + background_model_counts)
+                source_model_counts + background_model_counts
+            )
 
             #
 
             new_observation = self._observation.clone(
-                new_counts=randomized_source_counts)
+                new_counts=randomized_source_counts
+            )
 
             new_background = self._background.clone(
-                new_counts=randomized_background_counts, new_count_errors=background_count_errors)
+                new_counts=randomized_background_counts,
+                new_count_errors=background_count_errors,
+            )
 
             new_plugin = PolarLike(
                 name=new_name,
                 observation=new_observation,
                 background=new_background,
                 response=self._response,
-                verbose=False,
             )
 
             # Apply the same selections as the current data set
@@ -286,15 +368,12 @@ class PolarLike(PluginPrototype):
 
             return new_plugin
 
-    def set_model(self, likelihood_model_instance):
+    def set_model(self, likelihood_model_instance: Model) -> None:
         """
         Set the model to be used in the joint minimization. Must be a LikelihoodModel instance.
         :param likelihood_model_instance: instance of Model
         :type likelihood_model_instance: astromodels.Model
         """
-
-        if likelihood_model_instance is None:
-            return
 
         # if self._source_name is not None:
 
@@ -305,35 +384,38 @@ class PolarLike(PluginPrototype):
 
         for k, v in likelihood_model_instance.free_parameters.items():
 
-            if 'polarization.degree' in k:
+            if "polarization.degree" in k:
                 self._pol_degree = v
 
-            if 'polarization.angle' in k:
+            if "polarization.angle" in k:
                 self._pol_angle = v
 
         # now we need to get the intergal flux
 
         _, integral = self._get_diff_flux_and_integral(
-            likelihood_model_instance)
+            likelihood_model_instance
+        )
 
         self._integral_flux = integral
 
-        self._likelihood_model = likelihood_model_instance
+        self._likelihood_model: Model = likelihood_model_instance
 
     def _get_diff_flux_and_integral(self, likelihood_model):
 
-        n_point_sources = likelihood_model.get_number_of_point_sources()
+        n_point_sources: int = likelihood_model.get_number_of_point_sources()
 
         # Make a function which will stack all point sources (OGIP do not support spatial dimension)
 
         def differential_flux(scattering_edges):
             fluxes = likelihood_model.get_point_source_fluxes(
-                0, scattering_edges, tag=self._tag)
+                0, scattering_edges, tag=self._tag
+            )
 
             # If we have only one point source, this will never be executed
             for i in range(1, n_point_sources):
                 fluxes += likelihood_model.get_point_source_fluxes(
-                    i, scattering_edges, tag=self._tag)
+                    i, scattering_edges, tag=self._tag
+                )
 
             return fluxes
 
@@ -348,8 +430,15 @@ class PolarLike(PluginPrototype):
         def integral(e1, e2):
             # Simpson's rule
 
-            return (e2 - e1) / 6.0 * (differential_flux(e1) + 4 * differential_flux(
-                (e1 + e2) / 2.0) + differential_flux(e2))
+            return (
+                (e2 - e1)
+                / 6.0
+                * (
+                    differential_flux(e1)
+                    + 4 * differential_flux((e1 + e2) / 2.0)
+                    + differential_flux(e2)
+                )
+            )
 
         return differential_flux, integral
 
@@ -358,14 +447,23 @@ class PolarLike(PluginPrototype):
         # first we need to get the integrated expectation from the spectrum
 
         intergal_spectrum = np.array(
-            [self._integral_flux(emin, emax) for emin, emax in zip(self._response.ene_lo, self._response.ene_hi)])
+            [
+                self._integral_flux(emin, emax)
+                for emin, emax in zip(
+                    self._response.ene_lo, self._response.ene_hi
+                )
+            ]
+        )
 
         # we evaluate at the center of the bin. the bin widths are already included
         eval_points = np.array(
-            [[ene, self._pol_angle.value, self._pol_degree.value] for ene in self._response.energy_mid])
+            [
+                [ene, self._pol_angle.value, self._pol_degree.value]
+                for ene in self._response.energy_mid
+            ]
+        )
 
         # expectation = []
-        
 
         # # create the model counts by summing over energy
 
@@ -374,35 +472,42 @@ class PolarLike(PluginPrototype):
 
         #     expectation.append(rate)
 
+        return _interpolate_all(
+            self._all_interp, intergal_spectrum, eval_points
+        )
 
-
-        return _interpolate_all(self._all_interp, intergal_spectrum, eval_points)
-
-    def _get_model_counts(self):
+    def _get_model_counts(self) -> np.ndarray:
 
         if self._rebinner is None:
             model_rate = self._get_model_rate()
 
         else:
 
-            model_rate, = self._rebinner.rebin(self._get_model_rate())
+            (model_rate,) = self._rebinner.rebin(self._get_model_rate())
 
         return self._nuisance_parameter.value * self._exposure * model_rate
 
-    def get_log_like(self):
+    def get_log_like(self) -> float:
 
         model_counts = self._get_model_counts()
 
         if self._background.is_poisson:
 
             loglike, bkg_model = poisson_observed_poisson_background(
-                self._current_observed_counts, self._current_background_counts, self._scale, model_counts)
+                self._current_observed_counts,
+                self._current_background_counts,
+                self._scale,
+                model_counts,
+            )
 
         else:
 
             loglike, bkg_model = poisson_observed_gaussian_background(
-                self._current_observed_counts, self._current_background_counts, self._current_background_count_errors,
-                model_counts)
+                self._current_observed_counts,
+                self._current_background_counts,
+                self._current_background_count_errors,
+                model_counts,
+            )
 
         return np.sum(loglike)
 
@@ -418,17 +523,19 @@ class PolarLike(PluginPrototype):
         """
         # first create a file container
         observation_file = ModulationCurveFile.from_binned_modulation_curve(
-            self._observation)
+            self._observation
+        )
 
         background_file = ModulationCurveFile.from_binned_modulation_curve(
-            self._background)
+            self._background
+        )
 
         observation_file.writeto("%s.h5" % file_name)
 
         background_file.writeto("%s_bak.h5" % file_name)
 
     @property
-    def scattering_boundaries(self):
+    def scattering_boundaries(self) -> Tuple[np.ndarray, np.ndarray]:
         """
         Energy boundaries of channels currently in use (rebinned, if a rebinner is active)
 
@@ -443,26 +550,29 @@ class PolarLike(PluginPrototype):
             # Get the rebinned chans. NOTE: these are already masked
 
             sa_min, sa_max = self._rebinner.get_new_start_and_stop(
-                sa_min, sa_max)
+                sa_min, sa_max
+            )
 
         return sa_min, sa_max
 
     @property
-    def bin_widths(self):
+    def bin_widths(self) -> np.ndarray:
 
         sa_min, sa_max = self.scattering_boundaries
 
         return sa_max - sa_min
 
-    def display(self,
-                ax=None,
-                show_data=True,
-                show_model=True,
-                show_total=False,
-                model_kwargs={},
-                data_kwargs={},
-                edges=True,
-                min_rate=None):
+    def display(
+        self,
+        ax=None,
+        show_data=True,
+        show_model=True,
+        show_total=False,
+        model_kwargs={},
+        data_kwargs={},
+        edges=True,
+        min_rate=None,
+    ):
         """
 
         Display the data, model, or both.
@@ -476,15 +586,18 @@ class PolarLike(PluginPrototype):
         :return:
         """
 
-        tmp = ((self._observed_counts / self._exposure) -
-               self._background_counts / self._background_exposure)
+        tmp = (
+            self._observed_counts / self._exposure
+        ) - self._background_counts / self._background_exposure
 
         scattering_edges = np.array(self._observation.edges)
 
         sa_min, sa_max = scattering_edges[:-1], scattering_edges[1:]
 
-        tmp_db = ((self._observed_counts / self._exposure) - self._background_counts / self._background_exposure) / (
-            sa_max - sa_min)
+        tmp_db = (
+            (self._observed_counts / self._exposure)
+            - self._background_counts / self._background_exposure
+        ) / (sa_max - sa_min)
 
         old_rebinner = self._rebinner
 
@@ -517,10 +630,15 @@ class PolarLike(PluginPrototype):
 
         if show_total:
 
-            total_rate = self._current_observed_counts / self._exposure / self.bin_widths
+            total_rate = (
+                self._current_observed_counts / self._exposure / self.bin_widths
+            )
 
-            bkg_rate = self._current_background_counts / \
-                self._background_exposure / self.bin_widths
+            bkg_rate = (
+                self._current_background_counts
+                / self._background_exposure
+                / self.bin_widths
+            )
 
             total_errors = np.sqrt(total_rate)
 
@@ -530,39 +648,60 @@ class PolarLike(PluginPrototype):
 
             else:
 
-                bkg_errors = self._current_background_count_errors / self.bin_widths
+                bkg_errors = (
+                    self._current_background_count_errors / self.bin_widths
+                )
 
-            ax.hlines(total_rate, sa_min, sa_max,
-                      color='#7D0505', **data_kwargs)
+            ax.hlines(
+                total_rate, sa_min, sa_max, color="#7D0505", **data_kwargs
+            )
             ax.vlines(
                 np.mean([xs], axis=1),
                 total_rate - total_errors,
                 total_rate + total_errors,
-                color='#7D0505',
-                **data_kwargs)
+                color="#7D0505",
+                **data_kwargs,
+            )
 
-            ax.hlines(bkg_rate, sa_min, sa_max, color='#0D5BAE', **data_kwargs)
+            ax.hlines(bkg_rate, sa_min, sa_max, color="#0D5BAE", **data_kwargs)
             ax.vlines(
-                np.mean([xs], axis=1), bkg_rate - bkg_errors, bkg_rate + bkg_errors, color='#0D5BAE', **data_kwargs)
+                np.mean([xs], axis=1),
+                bkg_rate - bkg_errors,
+                bkg_rate + bkg_errors,
+                color="#0D5BAE",
+                **data_kwargs,
+            )
 
         if show_data:
 
             if self._background.is_poisson:
 
-                errors = np.sqrt((self._current_observed_counts / self._exposure) +
-                                 (self._current_background_counts / self._background_exposure))
+                errors = np.sqrt(
+                    (self._current_observed_counts / self._exposure)
+                    + (
+                        self._current_background_counts
+                        / self._background_exposure
+                    )
+                )
 
             else:
 
-                errors = np.sqrt((self._current_observed_counts / self._exposure) +
-                                 (self._current_background_count_errors / self._background_exposure)**2)
+                errors = np.sqrt(
+                    (self._current_observed_counts / self._exposure)
+                    + (
+                        self._current_background_count_errors
+                        / self._background_exposure
+                    )
+                    ** 2
+                )
 
-            ax.hlines(net_rate / self.bin_widths,
-                      sa_min, sa_max, **data_kwargs)
+            ax.hlines(net_rate / self.bin_widths, sa_min, sa_max, **data_kwargs)
             ax.vlines(
-                np.mean([xs], axis=1), (net_rate - errors) /
-                self.bin_widths, (net_rate + errors) / self.bin_widths,
-                **data_kwargs)
+                np.mean([xs], axis=1),
+                (net_rate - errors) / self.bin_widths,
+                (net_rate + errors) / self.bin_widths,
+                **data_kwargs,
+            )
 
         if show_model:
 
@@ -571,16 +710,19 @@ class PolarLike(PluginPrototype):
                 step_plot(
                     ax=ax,
                     xbins=np.vstack([sa_min, sa_max]).T,
-                    y=self._get_model_counts() / self._exposure / self.bin_widths,
-                    **model_kwargs)
+                    y=self._get_model_counts()
+                    / self._exposure
+                    / self.bin_widths,
+                    **model_kwargs,
+                )
 
             else:
 
                 y = self._get_model_counts() / self._exposure / self.bin_widths
                 ax.hlines(y, sa_min, sa_max, **model_kwargs)
 
-        ax.set_xlabel('Scattering Angle')
-        ax.set_ylabel('Net Rate (cnt/s/bin)')
+        ax.set_xlabel("Scattering Angle")
+        ax.set_ylabel("Net Rate (cnt/s/bin)")
 
         if old_rebinner is not None:
 
@@ -740,11 +882,11 @@ class PolarLike(PluginPrototype):
     #     return fig
 
     @property
-    def observation(self):
+    def observation(self) -> BinnedModulationCurve:
         return self._observation
 
     @property
-    def background(self):
+    def background(self) -> BinnedModulationCurve:
         return self._background
 
     @contextmanager
@@ -787,10 +929,13 @@ class PolarLike(PluginPrototype):
 
         # NOTE: the rebinner takes care of the mask already
 
-        assert self._background is not None, "This data has no background, cannot rebin on background!"
+        assert (
+            self._background is not None
+        ), "This data has no background, cannot rebin on background!"
 
-        rebinner = Rebinner(self._background_counts,
-                            min_number_of_counts, mask=None)
+        rebinner = Rebinner(
+            self._background_counts, min_number_of_counts, mask=None
+        )
 
         self._apply_rebinner(rebinner)
 
@@ -806,8 +951,9 @@ class PolarLike(PluginPrototype):
 
         # NOTE: the rebinner takes care of the mask already
 
-        rebinner = Rebinner(self._observed_counts,
-                            min_number_of_counts, mask=None)
+        rebinner = Rebinner(
+            self._observed_counts, min_number_of_counts, mask=None
+        )
 
         self._apply_rebinner(rebinner)
 
@@ -818,24 +964,26 @@ class PolarLike(PluginPrototype):
         # Apply the rebinning to everything.
         # NOTE: the output of the .rebin method are the vectors with the mask *already applied*
 
-        self._current_observed_counts, = self._rebinner.rebin(
-            self._observed_counts)
+        (self._current_observed_counts,) = self._rebinner.rebin(
+            self._observed_counts
+        )
 
         if self._background is not None:
 
-            self._current_background_counts, = self._rebinner.rebin(
-                self._background_counts)
+            (self._current_background_counts,) = self._rebinner.rebin(
+                self._background_counts
+            )
 
             if self._background_count_errors is not None:
                 # NOTE: the output of the .rebin method are the vectors with the mask *already applied*
 
-                self._current_background_count_errors, = self._rebinner.rebin_errors(
-                    self._background_count_errors)
+                (
+                    self._current_background_count_errors,
+                ) = self._rebinner.rebin_errors(self._background_count_errors)
 
-        if self._verbose:
-            print("Now using %s bins" % self._rebinner.n_bins)
+        log.info(f"Now using {self._rebinner.n_bins} bins")
 
-    def remove_rebinning(self):
+    def remove_rebinning(self) -> None:
         """
         Remove the rebinning scheme set with rebin_on_background.
 
@@ -849,18 +997,16 @@ class PolarLike(PluginPrototype):
         self._current_background_count_errors = self._background_count_errors
 
 
-
-
 @nb.njit(fastmath=True)
 def _interpolate_all(interpolators, integral_spectrum, eval_points):
 
     N = len(interpolators)
     expectation = np.empty(N)
 
-    
-    
     for n in range(N):
-    
-        expectation[n] = np.dot(interpolators[n].evaluate(eval_points), integral_spectrum )
+
+        expectation[n] = np.dot(
+            interpolators[n].evaluate(eval_points), integral_spectrum
+        )
 
     return expectation
