@@ -3,7 +3,7 @@ import numba as nb
 import numpy as np
 from interpolation.splines import eval_linear
 
-#import scipy.interpolate as interpolate
+# import scipy.interpolate as interpolate
 
 
 spec = [
@@ -21,9 +21,8 @@ spec = [
 ]
 
 
-@nb.jitclass(spec)
+@nb.experimental.jitclass(spec)
 class FastGridInterpolate(object):
-
     def __init__(self, grid, values):
         self._grid = grid
         self._values = np.ascontiguousarray(values)
@@ -34,16 +33,15 @@ class FastGridInterpolate(object):
 
 
 class PolarResponse(object):
-
     def __init__(self, response_file):
         """
         Construct the polar response from the HDF5 response file.
         This is the POLARIZATION response.
 
 
-        :param response_file: 
-        :returns: 
-        :rtype: 
+        :param response_file:
+        :returns:
+        :rtype:
 
         """
 
@@ -62,9 +60,9 @@ class PolarResponse(object):
 
         # now go through the response and extract things
 
-        with h5py.File(self._rsp_file, 'r') as f:
+        with h5py.File(self._rsp_file, "r") as f:
 
-            energy = f['energy'].value
+            energy = f["energy"].value
 
             ene_lo, ene_hi = [], []
 
@@ -76,11 +74,11 @@ class PolarResponse(object):
                 ene_lo.append(ene - 2.5)
                 ene_hi.append(ene + 2.5)
 
-            pol_ang = np.array(f['pol_ang'].value)
+            pol_ang = np.array(f["pol_ang"].value)
 
-            pol_deg = np.array(f['pol_deg'].value)
+            pol_deg = np.array(f["pol_deg"].value)
 
-            bins = np.array(f['bins'].value)
+            bins = np.array(f["bins"].value)
 
             # get the bin centers as these are where things
             # should be evaluated
@@ -96,7 +94,8 @@ class PolarResponse(object):
             for i, bm in enumerate(bin_center):
 
                 this_interpolator = FastGridInterpolate(
-                    (energy, pol_ang, pol_deg), f['matrix'][..., i])
+                    (energy, pol_ang, pol_deg), f["matrix"][..., i]
+                )
 
                 all_interp.append(this_interpolator)
 
@@ -115,33 +114,33 @@ class PolarResponse(object):
 
     @property
     def ene_lo(self):
-        """ 
+        """
         The low side of the energy bins
 
-        :returns: 
-        :rtype: 
+        :returns:
+        :rtype:
 
         """
         return self._ene_lo
 
     @property
     def ene_hi(self):
-        """ 
+        """
         The high side of the energy bins
 
-        :returns: 
-        :rtype: 
+        :returns:
+        :rtype:
 
         """
         return self._ene_hi
 
     @property
     def energy_mid(self):
-        """ 
+        """
         The mid point of the energy bins
 
-        :returns: 
-        :rtype: 
+        :returns:
+        :rtype:
 
         """
         return self._energy_mid
@@ -151,8 +150,8 @@ class PolarResponse(object):
         """
         The number of scattering angle bins
 
-        :returns: 
-        :rtype: 
+        :returns:
+        :rtype:
 
         """
 
@@ -163,8 +162,8 @@ class PolarResponse(object):
         """
         The scattering angle bin CENTERS.
 
-        :returns: 
-        :rtype: 
+        :returns:
+        :rtype:
 
         """
 
@@ -175,8 +174,8 @@ class PolarResponse(object):
         """
         The low side of the scattering angle bins
 
-        :returns: 
-        :rtype: 
+        :returns:
+        :rtype:
 
         """
 
@@ -187,8 +186,8 @@ class PolarResponse(object):
         """
         The high side of the scattering angle bins
 
-        :returns: 
-        :rtype: 
+        :returns:
+        :rtype:
 
         """
 
@@ -197,10 +196,10 @@ class PolarResponse(object):
     @property
     def interpolators(self):
         """
-        The series of interpolation functions 
+        The series of interpolation functions
 
-        :Returns: 
-        :rtype: 
+        :Returns:
+        :rtype:
 
         """
 
