@@ -62,7 +62,7 @@ class PolarResponse(object):
 
         with h5py.File(self._rsp_file, "r") as f:
 
-            energy = f["energy"].value
+            energy = f["energy"][()]
 
             ene_lo, ene_hi = [], []
 
@@ -74,11 +74,11 @@ class PolarResponse(object):
                 ene_lo.append(ene - 2.5)
                 ene_hi.append(ene + 2.5)
 
-            pol_ang = np.array(f["pol_ang"].value)
+            pol_ang = np.array(f["pol_ang"][()])
 
-            pol_deg = np.array(f["pol_deg"].value)
+            pol_deg = np.array(f["pol_deg"][()])
 
-            bins = np.array(f["bins"].value)
+            bins = np.array(f["bins"][()])
 
             # get the bin centers as these are where things
             # should be evaluated
