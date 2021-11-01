@@ -23,17 +23,17 @@ class POLARData(object):
             # This gets the spectral response
             rsp_grp = f['rsp']
 
-            matrix = rsp_grp['matrix'].value
-            ebounds = rsp_grp['ebounds'].value
-            mc_low = rsp_grp['mc_low'].value
-            mc_high = rsp_grp['mc_high'].value
+            matrix = rsp_grp['matrix'][()]
+            ebounds = rsp_grp['ebounds'][()]
+            mc_low = rsp_grp['mc_low'][()]
+            mc_high = rsp_grp['mc_high'][()]
 
             # open the event file
 
             # extract the pedestal corrected ADC channels
             # which are non-integer and possibly
             # less than zero
-            pha = f['energy'].value
+            pha = f['energy'][()]
 
             # non-zero ADC channels are invalid
             idx = pha >= 0
@@ -44,23 +44,23 @@ class POLARData(object):
             pha = pha[idx2 & idx]
 
             # get the dead time fraction
-            self._dead_time_fraction = (f['dead_ratio'].value)[idx & idx2]
+            self._dead_time_fraction = (f['dead_ratio'][()])[idx & idx2]
 
             # get the arrival time, in tunix of the events
-            self._time = (f['time'].value)[idx & idx2] - reference_time
+            self._time = (f['time'][()])[idx & idx2] - reference_time
 
             # digitize the ADC channels into bins
             # these bins are preliminary
 
             # now do the scattering angles
 
-            scattering_angles = f['scatter_angle'].value
+            scattering_angles = f['scatter_angle'][()]
 
             # clear the bad scattering angles
             idx = scattering_angles != -1
 
-            self._scattering_angle_time = (f['time'].value)[idx] - reference_time
-            self._scattering_angle_dead_time_fraction = (f['dead_ratio'].value)[idx]
+            self._scattering_angle_time = (f['time'][()])[idx] - reference_time
+            self._scattering_angle_dead_time_fraction = (f['dead_ratio'][()])[idx]
             self._scattering_angles = scattering_angles[idx]
 
         # build the POLAR response
@@ -79,7 +79,7 @@ class POLARData(object):
 
             with h5py.File(polar_hdf5_response, 'r') as f:
 
-                scatter_bounds = f['bins'].value
+                scatter_bounds = f['bins'][()]
 
             self._scattering_bins = scatter_bounds
             self._binned_scattering_angles = np.digitize(self._scattering_angles, scatter_bounds)
