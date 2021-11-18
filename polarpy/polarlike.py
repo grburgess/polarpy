@@ -171,7 +171,7 @@ class PolarLike(PluginPrototype):
 
         elif self._nuisance_parameter.min_value > value:
 
-            self._nuisance_parameter.min_value = value = 0.1
+            self._nuisance_parameter.min_value = value - 0.1
 
         self._nuisance_parameter.fix = True
         self._nuisance_parameter.value = value
