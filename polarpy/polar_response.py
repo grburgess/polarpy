@@ -1,5 +1,6 @@
 import h5py
 import numba as nb
+from numba.experimental import jitclass
 import numpy as np
 from interpolation.splines import eval_linear
 
@@ -21,7 +22,7 @@ spec = [
 ]
 
 
-@nb.jitclass(spec)
+@jitclass(spec)
 class FastGridInterpolate(object):
 
     def __init__(self, grid, values):
